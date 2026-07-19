@@ -457,17 +457,27 @@ body.focus-mode.layout-right #legenda{
 }
 
 
-@media (max-width:1024px){
-body.focus-mode.layout-left #painel_c2c{
-position:fixed!important;
-left:12px!important;
-top:12px!important;
-right:auto!important;
-bottom:auto!important;
-transform:none!important;
-width:calc(100vw - 24px)!important;
-max-width:none!important;
+
+body.focus-mode.mobile #painel_c2c{
+    position:fixed!important;
+    inset:12px!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    transform:none!important;
+    width:auto!important;
+    max-width:none!important;
+    box-sizing:border-box!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch!important;
 }
+body.focus-mode.mobile #containerBarra{
+    width:100%!important;
+    max-width:420px!important;
+}
+
 body.focus-mode.layout-center #painel_c2c{
 position:fixed!important;
 left:50%!important;

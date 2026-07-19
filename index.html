@@ -4,6 +4,7 @@
 <head>
 
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>gatos.png</title>
 <style>
 
@@ -457,27 +458,17 @@ body.focus-mode.layout-right #legenda{
 }
 
 
-
-body.focus-mode.mobile #painel_c2c{
-    position:fixed!important;
-    inset:12px!important;
-    left:auto!important;
-    right:auto!important;
-    top:auto!important;
-    bottom:auto!important;
-    transform:none!important;
-    width:auto!important;
-    max-width:none!important;
-    box-sizing:border-box!important;
-    overflow-y:auto!important;
-    overflow-x:hidden!important;
-    -webkit-overflow-scrolling:touch!important;
+@media (max-width:1024px){
+body.focus-mode.layout-left #painel_c2c{
+position:fixed!important;
+left:12px!important;
+top:12px!important;
+right:auto!important;
+bottom:auto!important;
+transform:none!important;
+width:calc(100vw - 24px)!important;
+max-width:none!important;
 }
-body.focus-mode.mobile #containerBarra{
-    width:100%!important;
-    max-width:420px!important;
-}
-
 body.focus-mode.layout-center #painel_c2c{
 position:fixed!important;
 left:50%!important;
@@ -501,7 +492,6 @@ max-width:none!important;
 }
 
 
-
 .linhaAtualReceita{
     display:flex;
     flex-wrap:wrap;
@@ -517,21 +507,41 @@ body.focus-mode.layout-left .linhaAtualReceita{justify-content:flex-start;}
 body.focus-mode.layout-center .linhaAtualReceita{justify-content:center;}
 body.focus-mode.layout-right .linhaAtualReceita{justify-content:flex-end;}
 
-/* Mobile: evita bugs do flex no Safari */
-body.mobile #linhaAtual{
-    display:block;
-    overflow:hidden;
-}
-body.mobile .linhaAtualReceita{
-    display:block!important;
-    width:100%;
-}
-body.mobile .linhaAtualReceita .bloco_receita{
-    display:inline-block!important;
-    margin:2px!important;
-    vertical-align:top;
-}
 
+
+
+/* Mobile adjustments */
+@media (max-width:1024px){
+  body{margin:8px!important;}
+  #atalhos{display:none!important;}
+  #painel_c2c{
+    width:100%!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+    padding:8px!important;
+  }
+  body.focus-mode #painel_c2c{
+    left:0!important;
+    top:0!important;
+    right:0!important;
+    bottom:0!important;
+    width:100vw!important;
+    max-width:100vw!important;
+    transform:none!important;
+    padding:10px!important;
+  }
+  .linhaAtualReceita{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    justify-content:flex-start!important;
+    gap:4px!important;
+  }
+  .bloco_receita{
+    font-size:14px!important;
+    padding:2px 5px!important;
+    white-space:nowrap!important;
+  }
+}
 
 </style>
 
@@ -109451,16 +109461,9 @@ trocarTema();
    document.getElementById("layout").value="left";
    trocarLayout();
    if(!document.body.classList.contains("zen")) toggleZen();
-    const p=document.getElementById("painel_c2c");
-    p.style.width="calc(100vw - 24px)";
-    p.style.maxWidth="calc(100vw - 24px)";
-    p.style.left="12px";
-    p.style.right="12px";
-    p.style.top="12px";
-    p.style.bottom="12px";
-    p.style.transform="none";
    const b=[...document.getElementsByTagName("button")].find(x=>x.textContent.includes("Modo Zen"));
    if(b) b.style.display="none";
+    document.getElementById("atalhos").style.display="none";
  }
 
  atualizar();

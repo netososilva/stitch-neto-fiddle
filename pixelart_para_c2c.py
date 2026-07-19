@@ -79,6 +79,7 @@ html.append("""
 <head>
 
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 """)
 
 html.append(f"<title>{os.path.basename(ARQUIVO)}</title>")
@@ -425,11 +426,11 @@ margin:0;
 }
 
 body.focus-mode #painel_c2c{
-position:fixed;
-top:50%;
-max-width:900px;
-width:900px;
-transform:translateY(-50%);
+    position:fixed;
+    top:50%;
+    max-width:900px;
+    width:900px;
+    transform:translateY(-50%);
 }
 
 body.focus-mode.layout-left #painel_c2c{
@@ -538,33 +539,33 @@ body.focus-mode.layout-right #legenda{
 
 @media (max-width:1024px){
 body.focus-mode.layout-left #painel_c2c{
-position:fixed!important;
-left:12px!important;
-top:12px!important;
+position:relative!important;
+left:auto!important;
+top:auto!important;
 right:auto!important;
 bottom:auto!important;
 transform:none!important;
-width:calc(100vw - 24px)!important;
+width:100%!important;
 max-width:none!important;
 }
 body.focus-mode.layout-center #painel_c2c{
-position:fixed!important;
-left:50%!important;
-top:50%!important;
+position:relative!important;
+left:auto!important;
+top:auto!important;
 right:auto!important;
 bottom:auto!important;
-transform:translate(-50%,-50%)!important;
-width:calc(100vw - 24px)!important;
+transform:none!important;
+width:100%!important;
 max-width:none!important;
 }
 body.focus-mode.layout-right #painel_c2c{
-position:fixed!important;
-right:12px!important;
-bottom:12px!important;
+position:relative!important;
+right:auto!important;
+bottom:auto!important;
 left:auto!important;
 top:auto!important;
 transform:none!important;
-width:calc(100vw - 24px)!important;
+width:100%!important;
 max-width:none!important;
 }
 }
@@ -586,6 +587,111 @@ body.focus-mode.layout-center .linhaAtualReceita{justify-content:center;}
 body.focus-mode.layout-right .linhaAtualReceita{justify-content:flex-end;}
 
 
+
+
+/* Mobile adjustments */
+@media (max-width:1024px){
+  body{margin:8px!important;}
+  #atalhos{display:none!important;}
+  #painel_c2c{
+    width:100%!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+    padding:8px!important;
+  }
+  body.focus-mode #painel_c2c{
+    position:relative!important;
+    left:auto!important;
+    top:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    width:auto!important;
+    max-width:none!important;
+    min-height:auto!important;
+    transform:none!important;
+    padding:10px!important;
+  }
+
+  html,
+  body{
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  .linhaAtualReceita{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    justify-content:flex-start!important;
+    gap:4px!important;
+  }
+  .bloco_receita{
+    font-size:14px!important;
+    padding:2px 5px!important;
+    white-space:nowrap!important;
+  }
+}
+
+
+
+@media (max-width:1024px){
+  #containerBarra{
+    width:100%!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+}
+
+
+
+@media (max-width:1024px){
+  html,body{
+    height:auto!important;
+    min-height:100%!important;
+    overflow-y:auto!important;
+  }
+
+  body.focus-mode{
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+  body.focus-mode #painel_c2c{
+    position:relative!important;
+    top:auto!important;
+    left:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    width:auto!important;
+    max-width:none!important;
+    min-height:auto!important;
+    transform:none!important;
+  }
+
+  #legenda{
+    display:block;
+    width:100%;
+    max-width:100%;
+    max-height:40vh;
+    overflow:auto;
+    box-sizing:border-box;
+    -webkit-overflow-scrolling:touch;
+  }
+}
+
+@media (max-width:600px){
+#legenda{
+    width:100%;
+    table-layout:fixed;
+}
+#legenda th,#legenda td{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+}
+#legenda .cor{margin:auto;}
+#legenda th:nth-child(3),
+#legenda td:nth-child(3){
+    display:none;
+}
+}
 </style>
 
 </head>
@@ -1029,6 +1135,7 @@ trocarTema();
    if(!document.body.classList.contains("zen")) toggleZen();
    const b=[...document.getElementsByTagName("button")].find(x=>x.textContent.includes("Modo Zen"));
    if(b) b.style.display="none";
+    document.getElementById("atalhos").style.display="none";
  }
 
  atualizar();

@@ -458,13 +458,24 @@ transform:none;
 text-align:right;
 }
 
+#acoes{
+margin:8px 0;
+display:flex;
+align-items:center;
+gap:6px;
+flex-wrap:wrap;
+}
+
 body.focus-mode.layout-left #controles,
+body.focus-mode.layout-left #acoes,
 body.focus-mode.layout-left #configuracoes{justify-content:flex-start;}
 
 body.focus-mode.layout-center #controles,
+body.focus-mode.layout-center #acoes,
 body.focus-mode.layout-center #configuracoes{justify-content:center;}
 
 body.focus-mode.layout-right #controles,
+body.focus-mode.layout-right #acoes,
 body.focus-mode.layout-right #configuracoes{justify-content:flex-end;}
 
 body.focus-mode.layout-center #linhaAtual,
@@ -900,13 +911,16 @@ html.append('<button onclick="proxima()">Próxima ➡</button>')
 html.append('<span>Ir para:</span>')
 html.append('<input id="irLinha" type="number" min="1">')
 html.append('<button onclick="irPara()">Ir</button>')
-html.append('<button id="btnImprimir" onclick="window.print()">Imprimir</button>')
-
-html.append('<button onclick="toggleZen()">Modo Zen</button>')
 
 html.append('</div>')
-html.append('<div id="configuracoes" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px">')
+html.append('<div style="height:8px"></div>')
+html.append('<div id="acoes" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">')
+html.append('<button onclick="window.print()" id="btnImprimir">Imprimir</button>')
+html.append('<button onclick="toggleZen()">Modo Zen</button>')
+html.append('<button id="btnInvert" onclick="toggleInvert()">Inverter ordem</button>')
 html.append('<button id="btnCores" onclick="toggleCores()">Ocultar cores</button>')
+html.append('</div>')
+html.append('<div id="configuracoes" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px">')
 html.append('<span>Tema:</span>')
 html.append("""
 <select id="tema" onchange="trocarTema()">
@@ -978,6 +992,7 @@ function abrirGrafico(){
 }
 
 let i=0;
+let invertRecipe=localStorage.getItem('c2c_invert')==='1';
 function atualizar(){
 localStorage.setItem("c2c_linha",i);
 document.getElementById("infoLinha").textContent=`Linha ${i+1} de ${receita.length}`;
@@ -985,7 +1000,8 @@ const alvo=document.getElementById("linhaAtual");
 alvo.replaceChildren();
 const wrap=document.createElement("div");
 wrap.className="linhaAtualReceita";
-for(const item of receita[i]){
+const lista=invertRecipe?[...receita[i]].reverse():receita[i];
+for(const item of lista){
  const s=document.createElement("span");
  s.className="bloco_receita";
  s.textContent=item.txt;
@@ -1107,6 +1123,32 @@ function toggleCores(forceHide){
  }
 }
 
+
+
+function prepararImpressao(){
+ document.querySelectorAll('[id^="dirprint"]').forEach((e,idx)=>{
+   
+ });
+ const linhas=document.querySelectorAll('#receita_print .linha_receita');
+ linhas.forEach((linha)=>{
+   const alvo=linha.querySelector('span[style*="flex:1"]');
+   if(!alvo)return;
+   const blocos=[...alvo.querySelectorAll('.bloco_receita')];
+   if(invertRecipe){
+      blocos.reverse().forEach(b=>alvo.appendChild(b));
+   }
+ });
+}
+window.addEventListener('afterprint',prepararImpressao);
+
+function toggleInvert(){
+ invertRecipe=!invertRecipe;
+ localStorage.setItem('c2c_invert',invertRecipe?'1':'0');
+ document.getElementById('btnInvert').textContent=invertRecipe?'Ordem normal':'Inverter ordem';
+ atualizar();
+ prepararImpressao();
+}
+
 window.onload=function(){
 
  let s=parseInt(localStorage.getItem("c2c_linha"));
@@ -1117,6 +1159,7 @@ let lay=localStorage.getItem("c2c_layout")||"center";
 document.getElementById("layout").value=lay;
 trocarLayout();
 document.getElementById("tema").value=th;
+ document.getElementById("btnInvert").textContent=invertRecipe?'Ordem normal':'Inverter ordem';
 let sc=localStorage.getItem("c2c_show_colors");
 if(sc==="0"){
  document.getElementById('tituloCores').style.display='none';

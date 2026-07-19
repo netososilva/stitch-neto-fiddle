@@ -347,11 +347,15 @@ margin:0;
 }
 
 body.focus-mode #painel_c2c{
-position:fixed;
-top:50%;
-max-width:900px;
-width:900px;
-transform:translateY(-50%);
+    position:relative!important;
+    top:auto!important;
+    left:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    width:100%!important;
+    max-width:900px!important;
+    transform:none!important;
+    margin:0 auto!important;
 }
 
 body.focus-mode.layout-left #painel_c2c{
@@ -460,33 +464,33 @@ body.focus-mode.layout-right #legenda{
 
 @media (max-width:1024px){
 body.focus-mode.layout-left #painel_c2c{
-position:fixed!important;
-left:12px!important;
-top:12px!important;
+position:relative!important;
+left:auto!important;
+top:auto!important;
 right:auto!important;
 bottom:auto!important;
 transform:none!important;
-width:calc(100vw - 24px)!important;
+width:100%!important;
 max-width:none!important;
 }
 body.focus-mode.layout-center #painel_c2c{
-position:fixed!important;
-left:50%!important;
-top:50%!important;
+position:relative!important;
+left:auto!important;
+top:auto!important;
 right:auto!important;
 bottom:auto!important;
-transform:translate(-50%,-50%)!important;
-width:calc(100vw - 24px)!important;
+transform:none!important;
+width:100%!important;
 max-width:none!important;
 }
 body.focus-mode.layout-right #painel_c2c{
-position:fixed!important;
-right:12px!important;
-bottom:12px!important;
+position:relative!important;
+right:auto!important;
+bottom:auto!important;
 left:auto!important;
 top:auto!important;
 transform:none!important;
-width:calc(100vw - 24px)!important;
+width:100%!important;
 max-width:none!important;
 }
 }
@@ -521,10 +525,10 @@ body.focus-mode.layout-right .linhaAtualReceita{justify-content:flex-end;}
     padding:8px!important;
   }
   body.focus-mode #painel_c2c{
-    position:absolute!important;
-    left:12px!important;
-    top:12px!important;
-    right:12px!important;
+    position:relative!important;
+    left:auto!important;
+    top:auto!important;
+    right:auto!important;
     bottom:auto!important;
     width:auto!important;
     max-width:none!important;
@@ -576,10 +580,10 @@ body.focus-mode.layout-right .linhaAtualReceita{justify-content:flex-end;}
   }
 
   body.focus-mode #painel_c2c{
-    position:absolute!important;
-    top:12px!important;
-    left:12px!important;
-    right:12px!important;
+    position:relative!important;
+    top:auto!important;
+    left:auto!important;
+    right:auto!important;
     bottom:auto!important;
     width:auto!important;
     max-width:none!important;

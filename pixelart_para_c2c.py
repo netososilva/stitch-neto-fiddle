@@ -814,7 +814,10 @@ html.append("</div>")
 TOTAL = largura + altura - 1
 receita_js=[]
 for d in range(TOTAL):
-    partes=[]; ultima_cor=None; quantidade=0; pontos=[]
+    itens=[]
+    ultima_cor=None
+    quantidade=0
+    pontos=[]
     for yy in range(altura):
         xx=d-yy
         if 0<=xx<largura:
@@ -826,15 +829,25 @@ for d in range(TOTAL):
             quantidade+=1
         else:
             if ultima_cor is not None:
-                r,g,b=ultima_cor;hexa=f"#{r:02X}{g:02X}{b:02X}";texto=cor_texto(r,g,b)
-                partes.append(f'<span class="bloco_receita" style="background:{hexa};color:{texto};">{mapa[ultima_cor]}×{quantidade}</span>')
-            ultima_cor=cor;quantidade=1
+                r,g,b=ultima_cor
+                itens.append({
+                    "bg":f"#{r:02X}{g:02X}{b:02X}",
+                    "fg":cor_texto(r,g,b),
+                    "txt":f"{mapa[ultima_cor]}×{quantidade}"
+                })
+            ultima_cor=cor
+            quantidade=1
     if ultima_cor is not None:
-        r,g,b=ultima_cor;hexa=f"#{r:02X}{g:02X}{b:02X}";texto=cor_texto(r,g,b)
-        partes.append(f'<span class="bloco_receita" style="background:{hexa};color:{texto};">{mapa[ultima_cor]}×{quantidade}</span>')
-    receita_js.append('<div class="linhaAtualReceita">'+ "".join(partes) + "</div>")
+        r,g,b=ultima_cor
+        itens.append({
+            "bg":f"#{r:02X}{g:02X}{b:02X}",
+            "fg":cor_texto(r,g,b),
+            "txt":f"{mapa[ultima_cor]}×{quantidade}"
+        })
+    receita_js.append(itens)
 
 acumulado=[]
+
 soma=0
 for d in range(TOTAL):
     qtd=0
@@ -846,10 +859,7 @@ for d in range(TOTAL):
     acumulado.append(soma)
 
 html.append("<script>")
-html.append("const receita=[")
-for linha in receita_js:
-    html.append(repr(linha)+",")
-html.append("];")
+html.append("const receita="+repr(receita_js)+";")
 html.append("const acumulado="+str(acumulado).replace(" ","")+";")
 html.append('''
 
@@ -865,7 +875,19 @@ let i=0;
 function atualizar(){
 localStorage.setItem("c2c_linha",i);
 document.getElementById("infoLinha").textContent=`Linha ${i+1} de ${receita.length}`;
-document.getElementById("linhaAtual").innerHTML=receita[i];
+const alvo=document.getElementById("linhaAtual");
+alvo.replaceChildren();
+const wrap=document.createElement("div");
+wrap.className="linhaAtualReceita";
+for(const item of receita[i]){
+ const s=document.createElement("span");
+ s.className="bloco_receita";
+ s.textContent=item.txt;
+ s.style.background=item.bg;
+ s.style.color=item.fg;
+ wrap.appendChild(s);
+}
+alvo.appendChild(wrap);
 document.getElementById("irLinha").value=i+1;
 let feitos=acumulado[i];
 let total=acumulado[acumulado.length-1];

@@ -109189,20 +109189,34 @@ function irPara(){
  }
 }
 async function toggleFullscreen(){
- if(!document.fullscreenElement){
+ const suporta=!!document.documentElement.requestFullscreen;
+
+ if(suporta){
+  if(!document.fullscreenElement){
    await document.documentElement.requestFullscreen();
- }else{
+  }else{
    await document.exitFullscreen();
+  }
+ }else{
+  document.body.classList.toggle("fullscreen");
+  toggleCores();
+  const b=[...document.getElementsByTagName("button")].find(x=>x.textContent.includes("Tela cheia")||x.textContent.includes("Sair"));
+  if(b)b.textContent=document.body.classList.contains("fullscreen")?"Sair da tela cheia":"Tela cheia";
  }
 }
 document.addEventListener("fullscreenchange",()=>{
- const fs=!!document.fullscreenElement;
+ const suporta=!!document.documentElement.requestFullscreen;
+ const fs=suporta
+   ? !!document.fullscreenElement
+   : document.body.classList.contains("fullscreen");
  document.body.classList.toggle("fullscreen",fs);
  toggleCores();
  const b=[...document.getElementsByTagName("button")].find(x=>x.textContent.includes("Tela cheia")||x.textContent.includes("Sair"));
  if(b)b.textContent=fs?"Sair da tela cheia":"Tela cheia";
  document.getElementById("atalhos").textContent=
- "← → Navegar • Esc, F Sair da tela cheia • Digite um número para ir para uma linha";
+ fs
+ ? "← → Navegar • Esc Sair da tela cheia • Digite um número para ir para uma linha"
+ : "← → Navegar • F Tela cheia • Digite um número para ir para uma linha";
 });
 
 document.addEventListener("keydown", function(e){
@@ -109244,7 +109258,10 @@ function trocarLayout(){
 
 
 function toggleCores(){
- const fs=!!document.fullscreenElement;
+ const suporta=!!document.documentElement.requestFullscreen;
+ const fs=suporta
+   ? !!document.fullscreenElement
+   : document.body.classList.contains("fullscreen");
  const btn=document.getElementById('btnCores');
  if(!fs){
   document.getElementById('tituloCores').style.display='';

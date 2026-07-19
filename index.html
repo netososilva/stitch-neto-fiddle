@@ -556,15 +556,29 @@ body.focus-mode.layout-right .linhaAtualReceita{justify-content:flex-end;}
 
 
 @media (max-width:1024px){
-  body.focus-mode{
-    overflow:auto!important;
-  }
-  body.focus-mode #painel_c2c{
-    position:relative!important;
+  html,body{
     height:auto!important;
-    min-height:100vh!important;
-    overflow:visible!important;
+    min-height:100%!important;
+    overflow-y:auto!important;
   }
+
+  body.focus-mode{
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+  body.focus-mode #painel_c2c{
+    position:absolute!important;
+    top:12px!important;
+    left:12px!important;
+    right:12px!important;
+    bottom:auto!important;
+    width:auto!important;
+    max-width:none!important;
+    min-height:auto!important;
+    transform:none!important;
+  }
+
   #legenda{
     display:block;
     overflow-x:auto;

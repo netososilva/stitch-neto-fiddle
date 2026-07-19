@@ -569,6 +569,23 @@ max-width:none!important;
 }
 }
 
+
+.linhaAtualReceita{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:flex-start;
+    gap:2px;
+}
+.linhaAtualReceita .bloco_receita{
+    display:inline-flex;
+    margin:0;
+}
+
+body.focus-mode.layout-left .linhaAtualReceita{justify-content:flex-start;}
+body.focus-mode.layout-center .linhaAtualReceita{justify-content:center;}
+body.focus-mode.layout-right .linhaAtualReceita{justify-content:flex-end;}
+
+
 </style>
 
 </head>
@@ -815,7 +832,7 @@ for d in range(TOTAL):
     if ultima_cor is not None:
         r,g,b=ultima_cor;hexa=f"#{r:02X}{g:02X}{b:02X}";texto=cor_texto(r,g,b)
         partes.append(f'<span class="bloco_receita" style="background:{hexa};color:{texto};">{mapa[ultima_cor]}×{quantidade}</span>')
-    receita_js.append("".join(partes))
+    receita_js.append('<div class="linhaAtualReceita">'+ "".join(partes) + "</div>")
 
 acumulado=[]
 soma=0

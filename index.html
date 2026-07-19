@@ -533,21 +533,6 @@ body.mobile .linhaAtualReceita .bloco_receita{
 }
 
 
-
-
-/* v25 mobile */
-body.mobile #atalhos{display:none!important;}
-body.mobile #linhaAtual{
-  overflow-x:hidden!important;
-  max-width:100%!important;
-  width:100%!important;
-}
-body.mobile .linhaAtualReceita{
-  display:flex!important;
-  flex-wrap:wrap!important;
-  max-width:100%!important;
-}
-
 </style>
 
 </head>
@@ -109466,6 +109451,14 @@ trocarTema();
    document.getElementById("layout").value="left";
    trocarLayout();
    if(!document.body.classList.contains("zen")) toggleZen();
+    const p=document.getElementById("painel_c2c");
+    p.style.width="calc(100vw - 24px)";
+    p.style.maxWidth="calc(100vw - 24px)";
+    p.style.left="12px";
+    p.style.right="12px";
+    p.style.top="12px";
+    p.style.bottom="12px";
+    p.style.transform="none";
    const b=[...document.getElementsByTagName("button")].find(x=>x.textContent.includes("Modo Zen"));
    if(b) b.style.display="none";
  }

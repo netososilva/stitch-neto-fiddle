@@ -501,6 +501,7 @@ max-width:none!important;
 }
 
 
+
 .linhaAtualReceita{
     display:flex;
     flex-wrap:wrap;
@@ -515,6 +516,21 @@ max-width:none!important;
 body.focus-mode.layout-left .linhaAtualReceita{justify-content:flex-start;}
 body.focus-mode.layout-center .linhaAtualReceita{justify-content:center;}
 body.focus-mode.layout-right .linhaAtualReceita{justify-content:flex-end;}
+
+/* Mobile: evita bugs do flex no Safari */
+body.mobile #linhaAtual{
+    display:block;
+    overflow:hidden;
+}
+body.mobile .linhaAtualReceita{
+    display:block!important;
+    width:100%;
+}
+body.mobile .linhaAtualReceita .bloco_receita{
+    display:inline-block!important;
+    margin:2px!important;
+    vertical-align:top;
+}
 
 
 </style>

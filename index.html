@@ -149,7 +149,6 @@ table{
     line-height:1.6;
     display:flex;
     align-items:flex-start;
-    flex-wrap:wrap;
 }
 .numero{
     flex:0 0 48px;
@@ -165,6 +164,15 @@ table{
     width:40px;
     font-weight:bold;
 }
+
+.linha_receita > span:last-child{
+    flex:1;
+    display:flex;
+    flex-wrap:wrap;
+    gap:2px;
+    min-width:0;
+}
+
 
 .bloco{
     display:inline-block;
@@ -235,11 +243,9 @@ body.focus-mode.showMini #titulo-grafico-print{display:block!important;}
 body.focus-mode.showMini #grid_print{display:table!important;}
 
 .bloco_receita{
-    display:inline-block;
-
-    display:inline-block;
-    padding:1px 8px;   /* espaço interno */
-    margin:0;          /* nenhum espaço externo */
+    display:inline-flex;
+    padding:1px 8px;
+    margin:0;
     border:1px solid #000;
     font-weight:bold;
 }

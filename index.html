@@ -535,13 +535,17 @@ body.mobile .linhaAtualReceita .bloco_receita{
 
 
 
-/* PATCH v24 - mobile only */
+/* v25 mobile */
 body.mobile #atalhos{display:none!important;}
 body.mobile #linhaAtual{
-    max-width:100vw!important;
-    overflow-x:auto!important;
-    overflow-y:hidden!important;
-    -webkit-overflow-scrolling:touch!important;
+  overflow-x:hidden!important;
+  max-width:100%!important;
+  width:100%!important;
+}
+body.mobile .linhaAtualReceita{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  max-width:100%!important;
 }
 
 </style>

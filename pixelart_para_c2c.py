@@ -629,8 +629,8 @@ body.focus-mode.layout-right .linhaAtualReceita{justify-content:flex-end;}
   }
   .linhaAtualReceita{
     display:flex!important;
+    width:100%!important;
     flex-wrap:wrap!important;
-    justify-content:flex-start!important;
     gap:4px!important;
   }
   .bloco_receita{
@@ -670,8 +670,9 @@ body.focus-mode.layout-right .linhaAtualReceita{justify-content:flex-end;}
     left:auto!important;
     right:auto!important;
     bottom:auto!important;
-    width:auto!important;
-    max-width:none!important;
+    width:100%!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
     min-height:auto!important;
     transform:none!important;
   }
@@ -999,6 +1000,8 @@ const alvo=document.getElementById("linhaAtual");
 alvo.replaceChildren();
 const wrap=document.createElement("div");
 wrap.className="linhaAtualReceita";
+const lay=document.getElementById("layout")?.value||"left";
+wrap.style.justifyContent=lay==="left"?"flex-start":lay==="center"?"center":"flex-end";
 const lista=invertRecipe?[...receita[i]].reverse():receita[i];
 for(const item of lista){
  const s=document.createElement("span");
@@ -1088,6 +1091,11 @@ function trocarLayout(){
  document.body.classList.remove("layout-left","layout-center","layout-right");
  document.body.classList.add("layout-"+l);
  localStorage.setItem("c2c_layout",l);
+ const wrap=document.querySelector(".linhaAtualReceita");
+ if(wrap){
+   wrap.style.justifyContent=l==="left"?"flex-start":l==="center"?"center":"flex-end";
+ }
+ atualizar();
 }
 
 

@@ -221,8 +221,7 @@ body.focus-mode #grid,
 body.focus-mode #titulo-grafico,
 body.focus-mode #grid_print,
 body.focus-mode #titulo-grafico-print,
-body.focus-mode button[onclick="abrirGrafico()"],
-body.focus-mode #btnImprimir{display:none!important;}
+body.focus-mode button[onclick="abrirGrafico()"]{display:none!important;}
 body.focus-mode:not(.showMini) #titulo-grafico,
 body.focus-mode:not(.showMini) #titulo-grafico-print,
 body.focus-mode:not(.showMini) #grid_print,
@@ -109369,7 +109368,7 @@ border:1px solid #888;
 <td style="background:#051A16;"></td>
 
 <td style="background:#051A16;"></td>
-</tr></table><div id="receita_tela"><h2>Instruções C2C</h2><div id="infoLinha" style="font-weight:bold;margin-bottom:10px"></div><div id="containerBarra"><div id="barraProgresso"></div></div><div id="textoProgresso" style="font-size:13px;margin-bottom:10px"></div><div id="linhaAtual" style="min-height:60px;margin-bottom:10px"></div><div id="controles"><button onclick="anterior()">⬅ Anterior</button><button onclick="proxima()">Próxima ➡</button><span>Ir para:</span><input id="irLinha" type="number" min="1"><button onclick="irPara()">Ir</button></div><div style="height:8px"></div><div id="acoes" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px"><button onclick="window.print()" id="btnImprimir">Imprimir</button><button onclick="toggleZen()">Modo Zen</button><button id="btnInvert" onclick="toggleInvert()">Inverter ordem</button><button id="btnCores" onclick="toggleCores()">Ocultar cores</button></div><div id="configuracoes" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px"><span>Tema:</span>
+</tr></table><div id="receita_tela"><h2>Instruções C2C</h2><div id="infoLinha" style="font-weight:bold;margin-bottom:10px"></div><div id="containerBarra"><div id="barraProgresso"></div></div><div id="textoProgresso" style="font-size:13px;margin-bottom:10px"></div><div id="linhaAtual" style="min-height:60px;margin-bottom:10px"></div><div id="controles"><button onclick="anterior()">⬅ Anterior</button><button onclick="proxima()">Próxima ➡</button><span>Ir para:</span><input id="irLinha" type="number" min="1"><button onclick="irPara()">Ir</button></div><div style="height:8px"></div><div id="acoes" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px"><button onclick="imprimirNormal()" id="btnImprimir">Imprimir</button><button onclick="toggleZen()">Modo Zen</button><button id="btnInvert" onclick="toggleInvert()">Inverter ordem</button><button id="btnCores" onclick="toggleCores()">Ocultar cores</button></div><div id="configuracoes" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px"><span>Tema:</span>
 <select id="tema" onchange="trocarTema()">
 <optgroup label="Claros">
 <option value="">Claro</option><option value="paper">Paper</option><option value="cotton">Cotton</option><option value="book">Book</option><option value="ivory">Ivory</option><option value="latte">Latte</option><option value="sepia">Sepia</option><option value="honey">Honey</option><option value="matcha">Matcha</option><option value="mint">Mint</option><option value="ice">Ice</option><option value="ocean-light">Ocean Light</option><option value="rose">Rose</option><option value="wood">Wood</option><option value="gruvbox-light">Gruvbox Light</option><option value="solarized-light">Solarized Light</option>
@@ -109519,6 +109518,22 @@ function toggleCores(forceHide){
 }
 
 
+
+function imprimirNormal(){
+ const zen=document.body.classList.contains('focus-mode');
+ if(zen){
+  document.body.classList.remove('focus-mode','zen');
+ }
+ prepararImpressao();
+ const restore=()=>{
+  if(zen){
+   document.body.classList.add('focus-mode','zen');
+  }
+  window.removeEventListener('afterprint',restore);
+ };
+ window.addEventListener('afterprint',restore);
+ window.print();
+}
 
 function prepararImpressao(){
  document.querySelectorAll('[id^="dirprint"]').forEach((e,idx)=>{

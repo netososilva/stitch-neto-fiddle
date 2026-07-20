@@ -300,8 +300,7 @@ body.focus-mode #grid,
 body.focus-mode #titulo-grafico,
 body.focus-mode #grid_print,
 body.focus-mode #titulo-grafico-print,
-body.focus-mode button[onclick="abrirGrafico()"],
-body.focus-mode #btnImprimir{display:none!important;}
+body.focus-mode button[onclick="abrirGrafico()"]{display:none!important;}
 body.focus-mode:not(.showMini) #titulo-grafico,
 body.focus-mode:not(.showMini) #titulo-grafico-print,
 body.focus-mode:not(.showMini) #grid_print,
@@ -915,7 +914,7 @@ html.append('<button onclick="irPara()">Ir</button>')
 html.append('</div>')
 html.append('<div style="height:8px"></div>')
 html.append('<div id="acoes" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">')
-html.append('<button onclick="window.print()" id="btnImprimir">Imprimir</button>')
+html.append('<button onclick="imprimirNormal()" id="btnImprimir">Imprimir</button>')
 html.append('<button onclick="toggleZen()">Modo Zen</button>')
 html.append('<button id="btnInvert" onclick="toggleInvert()">Inverter ordem</button>')
 html.append('<button id="btnCores" onclick="toggleCores()">Ocultar cores</button>')
@@ -1124,6 +1123,22 @@ function toggleCores(forceHide){
 }
 
 
+
+function imprimirNormal(){
+ const zen=document.body.classList.contains('focus-mode');
+ if(zen){
+  document.body.classList.remove('focus-mode','zen');
+ }
+ prepararImpressao();
+ const restore=()=>{
+  if(zen){
+   document.body.classList.add('focus-mode','zen');
+  }
+  window.removeEventListener('afterprint',restore);
+ };
+ window.addEventListener('afterprint',restore);
+ window.print();
+}
 
 function prepararImpressao(){
  document.querySelectorAll('[id^="dirprint"]').forEach((e,idx)=>{

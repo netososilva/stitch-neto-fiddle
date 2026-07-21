@@ -259,7 +259,7 @@ table{
         background:#fff !important;
         border-color:#888 !important;
     }
-    #receita_tela,#controles,#configuracoes,#containerBarra,#textoProgresso,#linhaAtual,#infoLinha,#atalhos,#btnCores,button[onclick="abrirGrafico()"]{display:none !important;}
+    #receita_tela,#controles,#configuracoes,#containerBarra,#textoProgresso,#linhaAtual,#infoLinha,#atalhos,button[onclick="abrirGrafico()"]{display:none !important;}
 
     #titulo-grafico,#grid{display:none !important;}
     #titulo-grafico-print,#grid_print,#receita_print,#informacoes,#tituloCores,#legenda{display:block !important;}
@@ -361,13 +361,13 @@ button{
 }
 
 body.focus-mode #informacoes{display:none!important;}
+body.focus-mode #tituloCores,
+body.focus-mode #legenda{display:none!important;}
 #atalhos{margin-top:14px;font-size:13px;color:#666;}
-#btnCores{display:none;}
 #layout{display:none;}
 body.focus-mode #layout{display:inline-block;}
 body.focus-mode span.layoutLabel{display:inline;}
 span.layoutLabel{display:none;}
-body.focus-mode #btnCores{display:inline-block;}
 body.focus-mode #grid,
 body.focus-mode #titulo-grafico,
 body.focus-mode #grid_print,
@@ -619,40 +619,6 @@ body.focus-mode.layout-right #legenda{
 }
 
 
-@media (max-width:1024px){
-body.focus-mode.layout-left #painel_c2c{
-position:relative!important;
-left:auto!important;
-top:auto!important;
-right:auto!important;
-bottom:auto!important;
-transform:none!important;
-width:100%!important;
-max-width:none!important;
-}
-body.focus-mode.layout-center #painel_c2c{
-position:relative!important;
-left:auto!important;
-top:auto!important;
-right:auto!important;
-bottom:auto!important;
-transform:none!important;
-width:100%!important;
-max-width:none!important;
-}
-body.focus-mode.layout-right #painel_c2c{
-position:relative!important;
-right:auto!important;
-bottom:auto!important;
-left:auto!important;
-top:auto!important;
-transform:none!important;
-width:100%!important;
-max-width:none!important;
-}
-}
-
-
 .linhaAtualReceita{
     display:flex;
     flex-wrap:wrap;
@@ -668,113 +634,6 @@ body.focus-mode.layout-left .linhaAtualReceita{justify-content:flex-start;}
 body.focus-mode.layout-center .linhaAtualReceita{justify-content:center;}
 body.focus-mode.layout-right .linhaAtualReceita{justify-content:flex-end;}
 
-
-
-
-/* Mobile adjustments */
-@media (max-width:1024px){
-  body{margin:8px!important;}
-  #atalhos{display:none!important;}
-  #painel_c2c{
-    width:100%!important;
-    max-width:100%!important;
-    box-sizing:border-box!important;
-    padding:8px!important;
-  }
-  body.focus-mode #painel_c2c{
-    position:relative!important;
-    left:auto!important;
-    top:auto!important;
-    right:auto!important;
-    bottom:auto!important;
-    width:auto!important;
-    max-width:none!important;
-    min-height:auto!important;
-    transform:none!important;
-    padding:10px!important;
-  }
-
-  html,
-  body{
-    overflow-y:auto!important;
-    -webkit-overflow-scrolling:touch!important;
-  }
-  .linhaAtualReceita{
-    display:flex!important;
-    width:100%!important;
-    flex-wrap:wrap!important;
-    gap:4px!important;
-  }
-  .bloco_receita{
-    font-size:14px!important;
-    padding:2px 5px!important;
-    white-space:nowrap!important;
-  }
-}
-
-
-
-@media (max-width:1024px){
-  #containerBarra{
-    width:100%!important;
-    max-width:100%!important;
-    box-sizing:border-box!important;
-  }
-}
-
-
-
-@media (max-width:1024px){
-  html,body{
-    height:auto!important;
-    min-height:100%!important;
-    overflow-y:auto!important;
-  }
-
-  body.focus-mode{
-    overflow-y:auto!important;
-    -webkit-overflow-scrolling:touch!important;
-  }
-
-  body.focus-mode #painel_c2c{
-    position:relative!important;
-    top:auto!important;
-    left:auto!important;
-    right:auto!important;
-    bottom:auto!important;
-    width:100%!important;
-    max-width:100%!important;
-    box-sizing:border-box!important;
-    min-height:auto!important;
-    transform:none!important;
-  }
-
-  #legenda{
-    display:block;
-    width:100%;
-    max-width:100%;
-    max-height:40vh;
-    overflow:auto;
-    box-sizing:border-box;
-    -webkit-overflow-scrolling:touch;
-  }
-}
-
-@media (max-width:600px){
-#legenda{
-    width:100%;
-    table-layout:fixed;
-}
-#legenda th,#legenda td{
-    overflow-wrap:anywhere;
-    word-break:break-word;
-}
-#legenda .cor{margin:auto;}
-#legenda th:nth-child(3),
-#legenda td:nth-child(3){
-    display:none;
-}
-}
 </style>
 
 </head>
@@ -990,9 +849,9 @@ html.append('<div id="acoes" style="display:flex;align-items:center;gap:6px;flex
 html.append('<button onclick="imprimirNormal()" id="btnImprimir">Imprimir</button>')
 html.append('<button onclick="salvarPDF()" id="btnPDF">Salvar PDF</button>')
 html.append('<button onclick="gerarEPUB()" id="btnEPUB">Gerar EPUB</button>')
-html.append('<button onclick="toggleZen()">Modo Zen</button>')
+html.append('<button onclick="toggleZen()" id="btnZen">Modo Zen</button>')
 html.append('<button id="btnInvert" onclick="toggleInvert()">Inverter ordem</button>')
-html.append('<button id="btnCores" onclick="toggleCores()">Ocultar cores</button><button id="btnNomeCor" onclick="toggleNomeCor()">Letras</button>')
+html.append('<button id="btnNomeCor" onclick="toggleNomeCor()">Blocos</button>')
 html.append('</div>')
 html.append('<div id="configuracoes" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px">')
 html.append('<span>Tema:</span>')
@@ -1168,7 +1027,7 @@ const alvo=document.getElementById("linhaAtual");
 alvo.replaceChildren();
 const wrap=document.createElement("div");
 wrap.className="linhaAtualReceita";
-const lay=document.getElementById("layout")?.value||"left";
+const lay=document.body.classList.contains("focus-mode") ? (document.getElementById("layout")?.value||"left") : "left";
 wrap.style.justifyContent=lay==="left"?"flex-start":lay==="center"?"center":"flex-end";
 const lista=invertRecipe?[...receita[i]].reverse():receita[i];
 for(const item of lista){
@@ -1219,9 +1078,10 @@ function toggleZen(){
    document.getElementById("grid").style.display="";
    document.getElementById("titulo-grafico").style.display="";
    const abrir=[...document.getElementsByTagName("button")].find(b=>b.textContent.includes("Abrir gráfico"));
-   if(abrir)abrir.style.display="";
+ if(abrir)abrir.style.display="";
  }
- toggleCores(true);
+ document.getElementById("btnZen").textContent=entering?"Sair do Modo Zen":"Modo Zen";
+ atualizar();
 }
 
 async function toggleFullscreen(){}
@@ -1269,40 +1129,6 @@ function trocarLayout(){
  }
  atualizar();
 }
-
-
-function toggleCores(forceHide){
- const fs=!!document.fullscreenElement || document.body.classList.contains('focus-mode');
- const btn=document.getElementById('btnCores');
- if(!fs){
-  document.getElementById('tituloCores').style.display='';
-  document.getElementById('legenda').style.display='table';
-  if(btn) btn.style.display='none';
-  return;
- }
- if(btn) btn.style.display='inline-block';
- if(forceHide===true){
-  document.getElementById('tituloCores').style.display='none';
-  document.getElementById('legenda').style.display='none';
-  btn.textContent='Mostrar cores';
-  localStorage.setItem('c2c_show_colors','0');
-  return;
- }
- const vis=document.getElementById('legenda').style.display!=='none';
- if(vis){
-  document.getElementById('tituloCores').style.display='none';
-  document.getElementById('legenda').style.display='none';
-  btn.textContent='Mostrar cores';
-  localStorage.setItem('c2c_show_colors','0');
- }else{
-  document.getElementById('tituloCores').style.display='';
-  document.getElementById('legenda').style.display='table';
-  btn.textContent='Ocultar cores';
-  localStorage.setItem('c2c_show_colors','1');
- }
-}
-
-
 
 
 function salvarPDF(){
@@ -1355,7 +1181,7 @@ window.addEventListener('afterprint',prepararImpressao);
 function toggleNomeCor(){
  usarNome=!usarNome;
  localStorage.setItem('c2c_nomecor',usarNome?'1':'0');
- document.getElementById('btnNomeCor').textContent=usarNome?'Letras':'Nomes';
+ document.getElementById('btnNomeCor').textContent=usarNome?'Blocos':'Nomes';
  atualizar();
 }
 
@@ -1373,18 +1199,12 @@ window.onload=function(){
  if(!isNaN(s) && s>=0 && s<receita.length) i=s;
  document.getElementById("atalhos").textContent="← → Navegar • Z Modo Zen • Digite um número para ir para uma linha";
 let th=localStorage.getItem("c2c_theme")||"";
-let lay=localStorage.getItem("c2c_layout")||"center";
+let lay=localStorage.getItem("c2c_layout")||"left";
 document.getElementById("layout").value=lay;
 trocarLayout();
 document.getElementById("tema").value=th;
  document.getElementById("btnInvert").textContent=invertRecipe?"Ordem normal":"Inverter ordem";
- document.getElementById("btnNomeCor").textContent=usarNome?"Letras":"Nomes";
-let sc=localStorage.getItem("c2c_show_colors");
-if(sc==="0"){
- document.getElementById('tituloCores').style.display='none';
- document.getElementById('legenda').style.display='none';
-}
-toggleCores();
+ document.getElementById("btnNomeCor").textContent=usarNome?"Blocos":"Nomes";
 miniNormal=false;
  miniFullscreen=false;
 aplicarMini();
@@ -1392,12 +1212,7 @@ aplicarMini();
 trocarTema();
  const mobile=window.matchMedia("(max-width:1024px)").matches;
  if(mobile){
-   document.getElementById("layout").value="left";
-   trocarLayout();
    if(!document.body.classList.contains("zen")) toggleZen();
-   const b=[...document.getElementsByTagName("button")].find(x=>x.textContent.includes("Modo Zen"));
-   if(b) b.style.display="none";
-    document.getElementById("atalhos").style.display="none";
  }
 
  atualizar();

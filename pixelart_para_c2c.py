@@ -45,6 +45,44 @@ def cor_texto(r, g, b):
 
     return "black"
 
+
+def nome_cor(r,g,b):
+    import math
+
+    # Paleta extensa de referência (RGB)
+    PALETA=[
+        ("Preto",(0,0,0)),("Branco",(255,255,255)),
+        ("Cinza Escuro",(80,80,80)),("Cinza",(128,128,128)),("Cinza Claro",(200,200,200)),
+        ("Creme",(245,245,220)),("Marfim",(255,255,240)),("Bege",(220,210,180)),
+        ("Areia",(194,178,128)),("Caqui",(189,183,107)),
+        ("Amarelo",(255,255,0)),("Mostarda",(205,171,45)),
+        ("Laranja",(255,165,0)),("Terracota",(204,120,92)),
+        ("Marrom",(139,69,19)),("Chocolate",(123,63,0)),("Caramelo",(175,111,9)),
+        ("Vermelho",(220,20,60)),("Vinho",(114,47,55)),("Bordô",(128,0,32)),
+        ("Rosa",(255,105,180)),("Rosa Claro",(255,182,193)),("Coral",(255,127,80)),
+        ("Magenta",(255,0,255)),("Lilás",(200,162,200)),("Lavanda",(181,126,220)),
+        ("Roxo",(128,0,128)),
+        ("Verde Limão",(124,252,0)),("Verde Claro",(144,238,144)),
+        ("Verde",(34,139,34)),("Verde Escuro",(0,100,0)),
+        ("Oliva",(107,142,35)),("Musgo",(85,107,47)),("Esmeralda",(46,125,50)),
+        ("Turquesa",(64,224,208)),("Ciano",(0,255,255)),
+        ("Azul Claro",(135,206,235)),("Azul",(30,144,255)),
+        ("Azul Marinho",(0,0,128)),("Petróleo",(0,95,106))
+    ]
+
+    # Regra especial para verdes muito escuros
+    if g>r*1.4 and g>=b and max(r,g,b)<45:
+        return "Verde Escuro"
+
+    melhor=None
+    dist=1e9
+    for nome,(cr,cg,cb) in PALETA:
+        d=(r-cr)**2+(g-cg)**2+(b-cb)**2
+        if d<dist:
+            dist=d
+            melhor=nome
+    return melhor
+
 def codigo(n):
     letras = string.ascii_uppercase
     s = ""
@@ -156,6 +194,19 @@ table{
             
 @media print {
 
+    @page{
+        margin:15mm;
+    }
+
+    html,body{
+        margin:0!important;
+        padding:0!important;
+    }
+
+    h1,h2{
+        margin-top:0!important;
+    }
+
     *{
         -webkit-print-color-adjust:exact !important;
         print-color-adjust:exact !important;
@@ -174,7 +225,8 @@ table{
 
     html,body{
         background:#fff !important;
-        margin:4mm;
+        margin:0 !important;
+        padding:0 !important;
     }
 
     body{
@@ -206,6 +258,7 @@ table{
 
     #titulo-grafico,#grid{display:none !important;}
     #titulo-grafico-print,#grid_print,#receita_print,#informacoes,#tituloCores,#legenda{display:block !important;}
+    #titulo-grafico-print{margin-top:20px !important;margin-bottom:8px !important;}
     #grid_print{display:table !important;border-collapse:collapse;margin-bottom:15px;}
     #grid_print td{width:2px;height:2px;border:none;padding:0;}
     #legenda{display:table !important;break-inside:avoid;}
@@ -918,7 +971,7 @@ html.append('<div id="acoes" style="display:flex;align-items:center;gap:6px;flex
 html.append('<button onclick="imprimirNormal()" id="btnImprimir">Imprimir</button>')
 html.append('<button onclick="toggleZen()">Modo Zen</button>')
 html.append('<button id="btnInvert" onclick="toggleInvert()">Inverter ordem</button>')
-html.append('<button id="btnCores" onclick="toggleCores()">Ocultar cores</button>')
+html.append('<button id="btnCores" onclick="toggleCores()">Ocultar cores</button><button id="btnNomeCor" onclick="toggleNomeCor()">Letras</button>')
 html.append('</div>')
 html.append('<div id="configuracoes" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px">')
 html.append('<span>Tema:</span>')
@@ -942,7 +995,8 @@ for d in range(TOTAL):
         xx=d-yy
         if 0<=xx<largura:
             pontos.append((largura-1-xx,altura-1-yy))
-    pontos.reverse()
+    if d % 2 == 0:
+        pontos.reverse()
     for x,y in pontos:
         cor=pixels[x,y]
         if cor==ultima_cor:
@@ -953,7 +1007,7 @@ for d in range(TOTAL):
                 itens.append({
                     "bg":f"#{r:02X}{g:02X}{b:02X}",
                     "fg":cor_texto(r,g,b),
-                    "txt":f"{mapa[ultima_cor]}×{quantidade}"
+                    "codigo":mapa[ultima_cor],"nome":nome_cor(r,g,b),"qtd":quantidade
                 })
             ultima_cor=cor
             quantidade=1
@@ -962,7 +1016,7 @@ for d in range(TOTAL):
         itens.append({
             "bg":f"#{r:02X}{g:02X}{b:02X}",
             "fg":cor_texto(r,g,b),
-            "txt":f"{mapa[ultima_cor]}×{quantidade}"
+            "codigo":mapa[ultima_cor],"nome":nome_cor(r,g,b),"qtd":quantidade
         })
     receita_js.append(itens)
 
@@ -993,6 +1047,7 @@ function abrirGrafico(){
 
 let i=0;
 let invertRecipe=localStorage.getItem('c2c_invert')==='1';
+let usarNome=localStorage.getItem('c2c_nomecor')==='1';
 function atualizar(){
 localStorage.setItem("c2c_linha",i);
 document.getElementById("infoLinha").textContent=`Linha ${i+1} de ${receita.length}`;
@@ -1006,7 +1061,7 @@ const lista=invertRecipe?[...receita[i]].reverse():receita[i];
 for(const item of lista){
  const s=document.createElement("span");
  s.className="bloco_receita";
- s.textContent=item.txt;
+ s.textContent=(usarNome?item.nome:item.codigo)+'×'+item.qtd;
  s.style.background=item.bg;
  s.style.color=item.fg;
  wrap.appendChild(s);
@@ -1164,6 +1219,14 @@ function prepararImpressao(){
 }
 window.addEventListener('afterprint',prepararImpressao);
 
+
+function toggleNomeCor(){
+ usarNome=!usarNome;
+ localStorage.setItem('c2c_nomecor',usarNome?'1':'0');
+ document.getElementById('btnNomeCor').textContent=usarNome?'Letras':'Nomes';
+ atualizar();
+}
+
 function toggleInvert(){
  invertRecipe=!invertRecipe;
  localStorage.setItem('c2c_invert',invertRecipe?'1':'0');
@@ -1182,7 +1245,8 @@ let lay=localStorage.getItem("c2c_layout")||"center";
 document.getElementById("layout").value=lay;
 trocarLayout();
 document.getElementById("tema").value=th;
- document.getElementById("btnInvert").textContent=invertRecipe?'Ordem normal':'Inverter ordem';
+ document.getElementById("btnInvert").textContent=invertRecipe?"Ordem normal":"Inverter ordem";
+ document.getElementById("btnNomeCor").textContent=usarNome?"Letras":"Nomes";
 let sc=localStorage.getItem("c2c_show_colors");
 if(sc==="0"){
  document.getElementById('tituloCores').style.display='none';
@@ -1240,8 +1304,9 @@ for d in range(TOTAL):
 
             pontos.append((x, y))
 
-    # Mantém a ordem do crochê
-    pontos.reverse()
+    # Alterna a direção a cada diagonal
+    if d % 2 == 0:
+        pontos.reverse()
 
     for x, y in pontos:
 
@@ -1259,7 +1324,7 @@ for d in range(TOTAL):
                 texto = cor_texto(r, g, b)
 
                 html.append(
-                    f'<span class="bloco_receita" style="background:{hexa};color:{texto};">{mapa[ultima_cor]}×{quantidade}</span>'
+                    f'<span class="bloco_receita" style="background:{hexa};color:{texto};">{nome_cor(r,g,b)}×{quantidade}</span>'
                 )
 
             ultima_cor = cor
@@ -1272,7 +1337,7 @@ for d in range(TOTAL):
         texto = cor_texto(r, g, b)
 
         html.append(
-            f'<span class="bloco_receita" style="background:{hexa};color:{texto};">{mapa[ultima_cor]}×{quantidade}</span>'
+            f'<span class="bloco_receita" style="background:{hexa};color:{texto};">{nome_cor(r,g,b)}×{quantidade}</span>'
         )
 
     html.append("</div>")

@@ -261,6 +261,20 @@ table{
     #titulo-grafico-print{margin-top:20px !important;margin-bottom:8px !important;}
     #grid_print{display:table !important;border-collapse:collapse;margin-bottom:15px;}
     #grid_print td{width:2px;height:2px;border:none;padding:0;}
+    .linha_receita{
+        font-size:12px !important;
+        line-height:1.6 !important;
+        margin:2px 0 !important;
+    }
+    body.pdf-mode .linha_receita{
+        font-size:14px !important;
+        line-height:2.1 !important;
+        margin:8px 0 !important;
+    }
+    body.pdf-mode .numero{
+        width:55px !important;
+        flex-basis:55px !important;
+    }
     #legenda{display:table !important;break-inside:avoid;}
 }
 
@@ -560,7 +574,7 @@ margin-right:auto;
     height:18px;
     border:1px solid #666;
     background:#ddd;
-    margin-bottom:6px;
+    margin-bottom:18px;
 }
 
 #barraProgresso{
@@ -957,7 +971,7 @@ html.append("<h2>Instruções C2C</h2>")
 html.append('<div id="infoLinha" style="font-weight:bold;margin-bottom:10px"></div>')
 html.append('<div id="containerBarra"><div id="barraProgresso"></div></div>')
 html.append('<div id="textoProgresso" style="font-size:13px;margin-bottom:10px"></div>')
-html.append('<div id="linhaAtual" style="min-height:60px;margin-bottom:10px"></div>')
+html.append('<div id="linhaAtual" style="min-height:60px;margin-top:28px;margin-bottom:10px"></div>')
 html.append('<div id="controles">')
 html.append('<button onclick="anterior()">⬅ Anterior</button>')
 html.append('<button onclick="proxima()">Próxima ➡</button>')
@@ -969,6 +983,7 @@ html.append('</div>')
 html.append('<div style="height:8px"></div>')
 html.append('<div id="acoes" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">')
 html.append('<button onclick="imprimirNormal()" id="btnImprimir">Imprimir</button>')
+html.append('<button onclick="salvarPDF()" id="btnPDF">Salvar PDF</button>')
 html.append('<button onclick="toggleZen()">Modo Zen</button>')
 html.append('<button id="btnInvert" onclick="toggleInvert()">Inverter ordem</button>')
 html.append('<button id="btnCores" onclick="toggleCores()">Ocultar cores</button><button id="btnNomeCor" onclick="toggleNomeCor()">Letras</button>')
@@ -982,6 +997,16 @@ html.append("""
 </optgroup><optgroup label="Escuros">
 <option value="dark">Escuro</option><option value="black-oled">Black OLED</option><option value="dracula">Dracula</option><option value="nord">Nord</option><option value="tokyo-night">Tokyo Night</option><option value="one-dark">One Dark</option><option value="monokai">Monokai</option><option value="material-dark">Material Dark</option><option value="material-palenight">Material Palenight</option><option value="night-owl">Night Owl</option><option value="github-dark">GitHub Dark</option><option value="vscode-dark">VS Code Dark+</option><option value="ayu-dark">Ayu Dark</option><option value="ayu-mirage">Ayu Mirage</option><option value="everforest">Everforest</option><option value="gruvbox-dark">Gruvbox Dark</option><option value="catppuccin-mocha">Catppuccin Mocha</option><option value="catppuccin-macchiato">Catppuccin Macchiato</option><option value="catppuccin-frappe">Catppuccin Frappé</option><option value="forest">Forest</option><option value="blue">Blue</option><option value="midnight">Midnight</option><option value="nebula">Nebula</option><option value="galaxy">Galaxy</option><option value="deep-space">Deep Space</option><option value="cyberpunk">Cyberpunk</option><option value="synthwave">Synthwave</option><option value="ember">Ember</option><option value="aurora">Aurora</option><option value="space-gray">Space Gray</option><option value="solarized-dark">Solarized Dark</option>
 </optgroup></select><span class="layoutLabel">Posição:</span><select id="layout" onchange="trocarLayout()"><option value="left">Esquerda</option><option value="center">Centro</option><option value="right">Direita</option></select>
+""")
+html.append("""
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+document.querySelectorAll("#receita_print .linha_receita span[style*='flex:1']").forEach(c=>{
+ const a=[...c.querySelectorAll("span")];
+ a.forEach((e,i)=>{if(i<a.length-1)e.insertAdjacentText("beforeend",", ");});
+});
+});
+</script>
 """)
 html.append("</div>")
 TOTAL = largura + altura - 1
@@ -1060,10 +1085,14 @@ wrap.style.justifyContent=lay==="left"?"flex-start":lay==="center"?"center":"fle
 const lista=invertRecipe?[...receita[i]].reverse():receita[i];
 for(const item of lista){
  const s=document.createElement("span");
- s.className="bloco_receita";
- s.textContent=(usarNome?item.nome:item.codigo)+'×'+item.qtd;
- s.style.background=item.bg;
- s.style.color=item.fg;
+ if(usarNome){
+  s.textContent='('+item.qtd+') '+item.nome+(lista.indexOf(item)<lista.length-1?', ':'');
+ }else{
+  s.className='bloco_receita';
+  s.textContent=item.codigo+'×'+item.qtd;
+  s.style.background=item.bg;
+  s.style.color=item.fg;
+ }
  wrap.appendChild(s);
 }
 alvo.appendChild(wrap);
@@ -1186,6 +1215,21 @@ function toggleCores(forceHide){
 }
 
 
+
+
+function salvarPDF(){
+ const zen=document.body.classList.contains('focus-mode');
+ if(zen) document.body.classList.remove('focus-mode','zen');
+ document.body.classList.add('pdf-mode');
+ prepararImpressao();
+ const restore=()=>{
+   document.body.classList.remove('pdf-mode');
+   if(zen) document.body.classList.add('focus-mode','zen');
+   window.removeEventListener('afterprint',restore);
+ };
+ window.addEventListener('afterprint',restore);
+ window.print();
+}
 
 function imprimirNormal(){
  const zen=document.body.classList.contains('focus-mode');
@@ -1324,7 +1368,7 @@ for d in range(TOTAL):
                 texto = cor_texto(r, g, b)
 
                 html.append(
-                    f'<span class="bloco_receita" style="background:{hexa};color:{texto};">{nome_cor(r,g,b)}×{quantidade}</span>'
+                    f'<span>({quantidade}) {nome_cor(r,g,b)}</span>'
                 )
 
             ultima_cor = cor
@@ -1337,7 +1381,7 @@ for d in range(TOTAL):
         texto = cor_texto(r, g, b)
 
         html.append(
-            f'<span class="bloco_receita" style="background:{hexa};color:{texto};">{nome_cor(r,g,b)}×{quantidade}</span>'
+            f'<span>({quantidade}) {nome_cor(r,g,b)}</span>'
         )
 
     html.append("</div>")

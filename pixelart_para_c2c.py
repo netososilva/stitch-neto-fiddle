@@ -923,18 +923,41 @@ for d in range(TOTAL):
     acumulado.append(soma)
 
 # O PNG é incorporado ao HTML para que o botão possa gerar um EPUB sem servidor.
-mini_grafico_epub = img.copy()
 reamostragem_epub = getattr(Image, "Resampling", Image).NEAREST
-mini_grafico_epub.thumbnail((900, 900), reamostragem_epub)
+
+def imagem_epub_nitida(imagem, lado_maximo=1600):
+    """Amplia pixels pequenos sem suavizá-los para a tela do Kindle."""
+    resultado = imagem.copy()
+    maior_lado = max(resultado.size)
+    if maior_lado < lado_maximo:
+        escala = (lado_maximo + maior_lado - 1) // maior_lado
+        resultado = resultado.resize(
+            (resultado.width * escala, resultado.height * escala), reamostragem_epub
+        )
+    elif maior_lado > lado_maximo:
+        resultado.thumbnail((lado_maximo, lado_maximo), reamostragem_epub)
+    return resultado
+
+mini_grafico_epub = imagem_epub_nitida(img)
 mini_grafico_buffer = BytesIO()
-mini_grafico_epub.save(mini_grafico_buffer, format="PNG")
+mini_grafico_epub.save(mini_grafico_buffer, format="PNG", optimize=True)
 mini_grafico_data_uri = "data:image/png;base64," + base64.b64encode(mini_grafico_buffer.getvalue()).decode("ascii")
+
+# A proporção 1:1,6 é a recomendada para capas Kindle.
+capa_epub = Image.new("RGB", (1600, 2560), "white")
+grafico_capa = mini_grafico_epub.copy()
+grafico_capa.thumbnail((1400, 1800), reamostragem_epub)
+capa_epub.paste(grafico_capa, ((1600 - grafico_capa.width) // 2, (2560 - grafico_capa.height) // 2))
+capa_buffer = BytesIO()
+capa_epub.save(capa_buffer, format="PNG", optimize=True)
+capa_data_uri = "data:image/png;base64," + base64.b64encode(capa_buffer.getvalue()).decode("ascii")
 
 html.append("<script>")
 html.append("const receita="+repr(receita_js)+";")
 html.append("const acumulado="+str(acumulado).replace(" ","")+";")
 html.append("const epubTitulo=" + json.dumps(os.path.basename(ARQUIVO), ensure_ascii=False) + ";")
 html.append("const epubMiniGrafico=" + json.dumps(mini_grafico_data_uri) + ";")
+html.append("const epubCapa=" + json.dumps(capa_data_uri) + ";")
 html.append(f"const epubLargura={largura};const epubAltura={altura};const epubTotalCores={len(cores)};")
 html.append('''
 
@@ -983,7 +1006,7 @@ async function gerarEPUB(){
  botao.disabled=true; botao.textContent="Gerando EPUB…";
  try{
   const total=receita.length, quadrados=epubLargura*epubAltura, base=epubTitulo.replace(/\.[^.]+$/,""), id="urn:c2c:"+base;
-  const css=`body{font-family:sans-serif;line-height:1.45;margin:5%;color:#111}h1,h2{text-align:center}.capa,.metadados{text-align:center}.metadados{margin:1.5em 0}.mini-grafico{display:block;width:95%;max-width:900px;max-height:70vh;margin:1.5em auto;object-fit:contain;image-rendering:pixelated}.progresso{height:1em;border:1px solid #555;background:#eee;margin:1em 0 .35em}.progresso-preenchimento{display:block;height:100%;min-height:1em;background:#4caf50}.receita{text-align:center;margin:2em 0}.instrucao{display:inline;font-weight:bold}.bloco{display:inline-block;padding:.25em .45em;margin:.12em;border:1px solid #222;font-weight:bold;border-radius:.2em}nav ol{padding-left:1.4em}`;
+  const css=`body{font-family:sans-serif;line-height:1.45;margin:5%;color:#111}h1,h2{text-align:center}.capa,.metadados{text-align:center}.metadados{margin:1.5em 0}.mini-grafico{display:block;width:100%;height:auto;margin:1.5em auto;image-rendering:pixelated}.progresso{width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #555;margin:1em 0 .35em}.progresso td{height:1em;padding:0;font-size:1px;line-height:1px}.progresso-preenchimento{background:#4caf50}.progresso-restante{background:#eee}.receita{text-align:center;margin:2em 0}.instrucao{display:inline;font-weight:bold}.bloco{display:inline-block;padding:.25em .45em;margin:.12em;border:1px solid #222;font-weight:bold;border-radius:.2em}nav ol{padding-left:1.4em}`;
   const capa=epubDocumento(epubTitulo,`<section class="capa" epub:type="cover"><h1>${epubEscapar(epubTitulo)}</h1><div class="metadados"><p><strong>Tamanho:</strong> ${epubLargura} × ${epubAltura}</p><p><strong>Total de cores:</strong> ${epubTotalCores}</p><p><strong>Total de quadrados:</strong> ${quadrados}</p></div><img class="mini-grafico" src="mini-grafico.png" alt="Mini gráfico da receita C2C" /></section>`);
   const capitulos=[];
   function adicionarCapitulo(indice,itens,ordem,nome){
@@ -992,7 +1015,8 @@ async function gerarEPUB(){
    const instrucoes=usarNome
     ? itens.map(item=>`<span class="instrucao">(${item.qtd}) ${epubEscapar(item.nome)}</span>`).join(", ")
     : itens.map(item=>`<span class="bloco" style="background-color:${item.bg};color:${item.fg}">${epubEscapar(item.codigo)}×${item.qtd}</span>`).join("");
-   const corpo=`<section epub:type="chapter"><h1>${epubEscapar(titulo)}</h1><div class="progresso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percentual.toFixed(1)}"><div class="progresso-preenchimento" style="width:${percentual.toFixed(1)}%"></div></div><p><strong>Progresso acumulado:</strong> ${feitos} de ${quadrados} quadrados (${percentual.toFixed(1)}%)</p><div class="receita">${instrucoes}</div></section>`;
+   const restante=100-percentual;
+   const corpo=`<section epub:type="chapter"><h1>${epubEscapar(titulo)}</h1><table class="progresso" role="presentation" aria-label="Progresso acumulado: ${percentual.toFixed(1)}%"><tr><td class="progresso-preenchimento" style="width:${percentual.toFixed(1)}%">&#160;</td><td class="progresso-restante" style="width:${restante.toFixed(1)}%">&#160;</td></tr></table><p><strong>Progresso acumulado:</strong> ${feitos} de ${quadrados} quadrados (${percentual.toFixed(1)}%)</p><div class="receita">${instrucoes}</div></section>`;
    capitulos.push({nome,titulo,conteudo:epubDocumento(titulo,corpo)});
   }
   receita.forEach((itens,indice)=>adicionarCapitulo(indice,itens,"normal",`linha-${indice+1}.xhtml`));
@@ -1003,8 +1027,8 @@ async function gerarEPUB(){
   const ncx=`<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd"><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head><meta name="dtb:uid" content="${epubEscapar(id)}" /></head><docTitle><text>${epubEscapar(epubTitulo)}</text></docTitle><navMap>${ncxPontos}</navMap></ncx>`;
   const manifest=capitulos.map((c,i)=>`<item id="capitulo-${i+1}" href="${c.nome}" media-type="application/xhtml+xml" />`).join("");
   const spine=capitulos.map((c,i)=>`<itemref idref="capitulo-${i+1}" />`).join("");
-  const opf=`<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="book-id" version="3.0" xml:lang="pt-BR"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="book-id">${epubEscapar(id)}</dc:identifier><dc:title>${epubEscapar(epubTitulo)}</dc:title><dc:language>pt-BR</dc:language><meta name="cover" content="mini-grafico" /></metadata><manifest><item id="cover" href="cover.xhtml" media-type="application/xhtml+xml" /><item id="mini-grafico" href="mini-grafico.png" media-type="image/png" properties="cover-image" /><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav" /><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" /><item id="style" href="style.css" media-type="text/css" />${manifest}</manifest><spine toc="ncx"><itemref idref="cover" />${spine}</spine><guide><reference type="cover" title="Capa" href="cover.xhtml" /></guide></package>`;
-  const arquivos=[{nome:"mimetype",dados:"application/epub+zip"},{nome:"META-INF/container.xml",dados:'<?xml version="1.0" encoding="UTF-8"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml" /></rootfiles></container>'},{nome:"OEBPS/style.css",dados:css},{nome:"OEBPS/mini-grafico.png",dados:epubImagemBytes(epubMiniGrafico)},{nome:"OEBPS/cover.xhtml",dados:capa},{nome:"OEBPS/nav.xhtml",dados:nav},{nome:"OEBPS/toc.ncx",dados:ncx},{nome:"OEBPS/content.opf",dados:opf},...capitulos.map(c=>({nome:"OEBPS/"+c.nome,dados:c.conteudo}))];
+  const opf=`<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="book-id" version="3.0" xml:lang="pt-BR"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="book-id">${epubEscapar(id)}</dc:identifier><dc:title>${epubEscapar(epubTitulo)}</dc:title><dc:language>pt-BR</dc:language><meta name="cover" content="capa-imagem" /></metadata><manifest><item id="cover" href="cover.xhtml" media-type="application/xhtml+xml" /><item id="capa-imagem" href="capa.png" media-type="image/png" properties="cover-image" /><item id="mini-grafico" href="mini-grafico.png" media-type="image/png" /><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav" /><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" /><item id="style" href="style.css" media-type="text/css" />${manifest}</manifest><spine toc="ncx"><itemref idref="cover" />${spine}</spine><guide><reference type="cover" title="Capa" href="cover.xhtml" /></guide></package>`;
+  const arquivos=[{nome:"mimetype",dados:"application/epub+zip"},{nome:"META-INF/container.xml",dados:'<?xml version="1.0" encoding="UTF-8"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml" /></rootfiles></container>'},{nome:"OEBPS/style.css",dados:css},{nome:"OEBPS/capa.png",dados:epubImagemBytes(epubCapa)},{nome:"OEBPS/mini-grafico.png",dados:epubImagemBytes(epubMiniGrafico)},{nome:"OEBPS/cover.xhtml",dados:capa},{nome:"OEBPS/nav.xhtml",dados:nav},{nome:"OEBPS/toc.ncx",dados:ncx},{nome:"OEBPS/content.opf",dados:opf},...capitulos.map(c=>({nome:"OEBPS/"+c.nome,dados:c.conteudo}))];
   const url=URL.createObjectURL(epubZip(arquivos)), link=document.createElement("a"); link.href=url; link.download=base+".epub"; link.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
  }finally{ botao.disabled=false; botao.textContent="Gerar EPUB"; }
 }
@@ -1332,9 +1356,11 @@ body { font-family: sans-serif; line-height: 1.45; margin: 5%; color: #111; }
 h1, h2 { text-align: center; }
 .capa, .metadados { text-align: center; }
 .metadados { margin: 1.5em 0; }
-.mini-grafico { display: block; width: 95%; max-width: 900px; max-height: 70vh; margin: 1.5em auto; object-fit: contain; image-rendering: pixelated; }
-.progresso { height: 1em; border: 1px solid #555; background: #eee; margin: 1em 0 .35em; }
-.progresso-preenchimento { display: block; height: 100%; min-height: 1em; background: #4caf50; }
+.mini-grafico { display: block; width: 100%; height: auto; margin: 1.5em auto; image-rendering: pixelated; }
+.progresso { width: 100%; table-layout: fixed; border-collapse: collapse; border: 1px solid #555; margin: 1em 0 .35em; }
+.progresso td { height: 1em; padding: 0; font-size: 1px; line-height: 1px; }
+.progresso-preenchimento { background: #4caf50; }
+.progresso-restante { background: #eee; }
 .receita { text-align: center; margin: 2em 0; }
 .instrucao { display: inline; font-weight: bold; }
 nav ol { padding-left: 1.4em; }
@@ -1342,9 +1368,7 @@ nav ol { padding-left: 1.4em; }
 
     # Uma imagem PNG é exibida de forma consistente no Kindle, ao contrário de
     # células vazias de tabela coloridas apenas por CSS.
-    mini_grafico = img.copy()
-    reamostragem = getattr(Image, "Resampling", Image).NEAREST
-    mini_grafico.thumbnail((900, 900), reamostragem)
+    mini_grafico = imagem_epub_nitida(img)
     mini_grafico_png = BytesIO()
     mini_grafico.save(mini_grafico_png, format="PNG")
 
@@ -1379,9 +1403,10 @@ nav ol { padding-left: 1.4em; }
         capitulos[nome_arquivo] = xhtml_document(titulo_capitulo, f'''
 <section epub:type="chapter">
   <h1>{escape(titulo_capitulo)}</h1>
-  <div class="progresso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{percentual:.1f}">
-    <div class="progresso-preenchimento" style="width:{percentual:.1f}%"></div>
-  </div>
+  <table class="progresso" role="presentation" aria-label="Progresso acumulado: {percentual:.1f}%"><tr>
+    <td class="progresso-preenchimento" style="width:{percentual:.1f}%">&#160;</td>
+    <td class="progresso-restante" style="width:{100 - percentual:.1f}%">&#160;</td>
+  </tr></table>
   <p><strong>Progresso acumulado:</strong> {feitos} de {total_quadrados} quadrados ({percentual:.1f}%)</p>
   <div class="receita">{", ".join(instrucoes)}</div>
 </section>''')
@@ -1432,11 +1457,12 @@ nav ol { padding-left: 1.4em; }
   <dc:identifier id="book-id">{escape(identificador)}</dc:identifier>
   <dc:title>{escape(titulo)}</dc:title>
   <dc:language>pt-BR</dc:language>
-  <meta name="cover" content="mini-grafico" />
+  <meta name="cover" content="capa-imagem" />
 </metadata>
 <manifest>
   <item id="cover" href="cover.xhtml" media-type="application/xhtml+xml" />
-  <item id="mini-grafico" href="mini-grafico.png" media-type="image/png" properties="cover-image" />
+  <item id="capa-imagem" href="capa.png" media-type="image/png" properties="cover-image" />
+  <item id="mini-grafico" href="mini-grafico.png" media-type="image/png" />
   <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav" />
   <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />
   <item id="style" href="style.css" media-type="text/css" />
@@ -1455,6 +1481,7 @@ nav ol { padding-left: 1.4em; }
         epub.writestr(zipfile.ZipInfo("mimetype"), "application/epub+zip", compress_type=zipfile.ZIP_STORED)
         epub.writestr("META-INF/container.xml", container_xml)
         epub.writestr("OEBPS/style.css", style_css)
+        epub.writestr("OEBPS/capa.png", capa_buffer.getvalue())
         epub.writestr("OEBPS/mini-grafico.png", mini_grafico_png.getvalue())
         epub.writestr("OEBPS/cover.xhtml", capa)
         epub.writestr("OEBPS/nav.xhtml", nav)

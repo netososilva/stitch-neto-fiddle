@@ -109398,12 +109398,12 @@ async function gerarEPUB(){
   const total=receita.length, quadrados=epubLargura*epubAltura, base=epubTitulo.replace(/\.[^.]+$/,""), id="urn:c2c:"+base, anoGeracao=new Date().getFullYear(), tecnicaEpub=nomeTecnica();
   const css=`body{font-family:sans-serif;line-height:1.45;margin:5%;color:#111}h1,h2{text-align:center}.capa,.metadados{text-align:center}.capa{margin:-5%}.capa-imagem{display:block;width:100%;height:auto}.metadados{margin:1.5em 0}.progresso{width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #555;margin:1em 0 .35em}.progresso td{height:1em;padding:0;font-size:1px;line-height:1px}.progresso-preenchimento{background:#4caf50}.progresso-restante{background:#eee}.receita{text-align:center;margin:2em 0}.instrucao{display:inline;font-weight:bold}.bloco{display:inline-block;padding:.25em .45em;margin:.12em;border:1px solid #222;font-weight:bold;border-radius:.2em}.concluida{text-decoration:line-through 2px currentColor;opacity:.58;filter:saturate(.65)}nav ol{padding-left:1.4em}`;
   const capa=epubDocumento(epubTitulo,`<section class="capa" epub:type="cover"><img class="capa-imagem" src="capa.png" alt="${epubEscapar(epubTitulo)}" /></section>`);
-  const capitulos=[], indiceCapitulos=[];
+  const capitulos=[], indiceCapitulos=[];const infoNome="informacoes.xhtml";const infoTitulo="Informações";const infoCorpo=`<section class="metadados"><h1>${epubEscapar(base)}</h1><p><strong>Tamanho:</strong> ${epubLargura} × ${epubAltura}</p><p><strong>Total de cores:</strong> ${epubTotalCores}</p><p><strong>Total de quadrados:</strong> ${quadrados}</p><p><strong>Técnica:</strong> ${epubEscapar(tecnicaEpub)}</p></section>`;capitulos.push({nome:infoNome,titulo:infoTitulo,conteudo:epubDocumento(infoTitulo,infoCorpo)});indiceCapitulos.push({nome:infoNome,titulo:infoTitulo});
   function adicionarPaginas(indice,itens,ordem,prefixo){
    const linha=indice+1, blocosAnteriores=indice>0?acumulado[indice-1]:0, totalInstrucoes=itens.length;
    for(let concluidas=0;concluidas<=totalInstrucoes;concluidas++){
     const feitos=blocosAnteriores+itens.slice(0,concluidas).reduce((soma,item)=>soma+item.qtd,0), percentual=feitos*100/quadrados;
-    const tituloBase=`${tecnicaEpub} — Linha ${linha} de ${total} — Ordem ${ordem}`;
+    const tituloBase=`Linha ${linha} de ${total} — Ordem ${ordem}`;
     const titulo=`${tituloBase} — Passo ${concluidas} de ${totalInstrucoes}`;
     const instrucoes=usarNome
      ? itens.map((item,indiceItem)=>`<span class="instrucao${indiceItem<concluidas?' concluida':''}">(${item.qtd}) ${epubEscapar(item.nome)}</span>`).join(", ")
@@ -109455,7 +109455,10 @@ function obterConcluidos(){
 function salvarConcluidos(concluidos){
  itensConcluidos[i]=[...concluidos].sort((a,b)=>a-b);
  localStorage.setItem(`c2c_itens_concluidos_${tecnica}`,JSON.stringify(itensConcluidos));
+
+ atualizarTela();
 }
+
 
 function nomeTecnica(){return tecnica==='linha'?'Linha a linha':'C2C';}
 function trocarTecnica(){

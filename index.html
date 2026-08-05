@@ -109455,10 +109455,7 @@ function obterConcluidos(){
 function salvarConcluidos(concluidos){
  itensConcluidos[i]=[...concluidos].sort((a,b)=>a-b);
  localStorage.setItem(`c2c_itens_concluidos_${tecnica}`,JSON.stringify(itensConcluidos));
-
- atualizarTela();
 }
-
 
 function nomeTecnica(){return tecnica==='linha'?'Linha a linha':'C2C';}
 function trocarTecnica(){

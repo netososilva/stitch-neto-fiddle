@@ -259,7 +259,7 @@ table{
         background:#fff !important;
         border-color:#888 !important;
     }
-    #receita_tela,#controles,#configuracoes,#containerBarra,#textoProgresso,#linhaAtual,#infoLinha,#atalhos,button[onclick="abrirGrafico()"]{display:none !important;}
+    #receita_tela,#controlesExecucao,#controles,#configuracoes,#containerBarra,#textoProgresso,#linhaAtual,#infoLinha,#atalhos,button[onclick="abrirGrafico()"]{display:none !important;}
 
     #titulo-grafico,#grid{display:none !important;}
     #titulo-grafico-print,#grid_print,#receita_print,#informacoes,#tituloCores,#legenda{display:block !important;}
@@ -270,6 +270,9 @@ table{
         font-size:12px !important;
         line-height:1.6 !important;
         margin:2px 0 !important;
+    }
+    .instrucao_impressao + .instrucao_impressao::before{
+        content:", ";
     }
     body.pdf-mode .linha_receita{
         font-size:14px !important;
@@ -345,12 +348,29 @@ button{
     margin:0 4px;
 }
 
-#controles{
+#controlesExecucao,
+#controles,
+#acoes,
+#configuracoes{
     display:flex;
     align-items:center;
     gap:6px;
     flex-wrap:wrap;
-    margin-bottom:10px;
+    margin:0 0 8px;
+}
+
+#controlesExecucao{
+    justify-content:flex-start;
+}
+
+.item-feito{
+    opacity:.58;
+    text-decoration:line-through 2px currentColor;
+    filter:saturate(.65);
+}
+
+.linhaAtualReceita .bloco_receita.item-feito{
+    box-shadow:inset 0 0 0 1px currentColor;
 }
 
 #atalhos{
@@ -420,6 +440,8 @@ body.theme-dark{--bg:#202124;--text:#eee;--panel:#2b2b2b;--border:#666;--header:
 body.theme-dracula{--bg:#282A36;--text:#F8F8F2;--panel:#343746;--border:#6272A4;--header:#44475A;--button:#44475A;--progress:#50FA7B;}
 body.theme-forest{--bg:#233127;--text:#eef7ee;--panel:#2e4232;--border:#557a55;--header:#3f5b43;--button:#48644c;--progress:#7ed957;}
 body.theme-blue{--bg:#eaf3ff;--text:#13294b;--panel:#fff;--border:#6d8fb8;--header:#bfd5f2;--button:#d8e7fb;--progress:#4b8cff;}
+body.theme-lilac-light{--bg:#f7f1ff;--text:#44345f;--panel:#fff;--border:#c9b5e6;--header:#e9ddf7;--button:#f1eaff;--progress:#8b5cf6;}
+body.theme-purple-light{--bg:#faf5ff;--text:#4a1d5d;--panel:#fff;--border:#d8b4e2;--header:#f3e0f7;--button:#faedff;--progress:#a21caf;}
 body.theme-sepia{--bg:#f4ecd8;--text:#4b382a;--panel:#fbf6ea;--border:#a88d6a;--header:#e7d8bb;--button:#efe2c8;--progress:#8b6b3f;}
 body.theme-solarized-light{--bg:#fdf6e3;--text:#657b83;--panel:#fffdf5;--border:#93a1a1;--header:#eee8d5;--button:#eee8d5;--progress:#2aa198;}
 body.theme-solarized-dark{--bg:#002b36;--text:#93a1a1;--panel:#073642;--border:#586e75;--header:#09404f;--button:#0b4a5a;--progress:#2aa198;}
@@ -442,6 +464,8 @@ body.theme-midnight{--bg:#10131a;--text:#d7e3fc;--panel:#1a2130;--border:#394867
 body.theme-nebula{--bg:#1b1f2a;--text:#e6edf7;--panel:#2b3140;--border:#56627a;--header:#384258;--button:#384258;--progress:#9b59b6;}
 body.theme-ember{--bg:#2b1d1a;--text:#f7e7dd;--panel:#3b2924;--border:#8b5a4a;--header:#53352d;--button:#53352d;--progress:#e67e22;}
 body.theme-space-gray{--bg:#20242b;--text:#d8dee9;--panel:#2d333b;--border:#5b6574;--header:#3a424d;--button:#3a424d;--progress:#81a1c1;}
+body.theme-lilac-dark{--bg:#241d33;--text:#eee7fa;--panel:#302744;--border:#705a91;--header:#403356;--button:#403356;--progress:#b794f4;}
+body.theme-purple-dark{--bg:#221127;--text:#fae8ff;--panel:#32183a;--border:#804d8b;--header:#45204f;--button:#45204f;--progress:#e879f9;}
 
 
 body.theme-cotton{--bg:#ffffff;--text:#222;--panel:#fff;--border:#ddd;--header:#f2f2f2;--button:#fafafa;--progress:#4CAF50;}
@@ -529,22 +553,17 @@ transform:none;
 text-align:right;
 }
 
-#acoes{
-margin:8px 0;
-display:flex;
-align-items:center;
-gap:6px;
-flex-wrap:wrap;
-}
-
+body.focus-mode.layout-left #controlesExecucao,
 body.focus-mode.layout-left #controles,
 body.focus-mode.layout-left #acoes,
 body.focus-mode.layout-left #configuracoes{justify-content:flex-start;}
 
+body.focus-mode.layout-center #controlesExecucao,
 body.focus-mode.layout-center #controles,
 body.focus-mode.layout-center #acoes,
 body.focus-mode.layout-center #configuracoes{justify-content:center;}
 
+body.focus-mode.layout-right #controlesExecucao,
 body.focus-mode.layout-right #controles,
 body.focus-mode.layout-right #acoes,
 body.focus-mode.layout-right #configuracoes{justify-content:flex-end;}
@@ -679,6 +698,7 @@ body.focus-mode.layout-right .linhaAtualReceita{justify-content:flex-end;}
         overflow-y:auto;
     }
 
+    #controlesExecucao,
     #controles,
     #acoes,
     #configuracoes{
@@ -888,16 +908,19 @@ html.append('<div id="infoLinha" style="font-weight:bold;margin-bottom:10px"></d
 html.append('<div id="containerBarra"><div id="barraProgresso"></div></div>')
 html.append('<div id="textoProgresso" style="font-size:13px;margin-bottom:10px"></div>')
 html.append('<div id="linhaAtual" style="min-height:60px;margin-top:28px;margin-bottom:10px"></div>')
+html.append('<div id="controlesExecucao">')
+html.append('<button onclick="marcarAnterior()">← Anterior</button>')
+html.append('<button onclick="marcarProximo()">Próximo →</button>')
+html.append('</div>')
 html.append('<div id="controles">')
-html.append('<button onclick="anterior()">⬅ Anterior</button>')
-html.append('<button onclick="proxima()">Próxima ➡</button>')
+html.append('<button onclick="anterior()">⬅ Página anterior</button>')
+html.append('<button onclick="proxima()">Próxima página ➡</button>')
 html.append('<span>Ir para:</span>')
 html.append('<input id="irLinha" type="number" min="1">')
 html.append('<button onclick="irPara()">Ir</button>')
 
 html.append('</div>')
-html.append('<div style="height:8px"></div>')
-html.append('<div id="acoes" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">')
+html.append('<div id="acoes">')
 html.append('<button onclick="imprimirNormal()" id="btnImprimir">Imprimir</button>')
 html.append('<button onclick="salvarPDF()" id="btnPDF">Salvar PDF</button>')
 html.append('<button onclick="gerarEPUB()" id="btnEPUB">Gerar EPUB</button>')
@@ -905,25 +928,15 @@ html.append('<button onclick="toggleZen()" id="btnZen">Modo Zen</button>')
 html.append('<button id="btnInvert" onclick="toggleInvert()">Inverter ordem</button>')
 html.append('<button id="btnNomeCor" onclick="toggleNomeCor()">Blocos</button>')
 html.append('</div>')
-html.append('<div id="configuracoes" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px">')
+html.append('<div id="configuracoes">')
 html.append('<span>Tema:</span>')
 html.append("""
 <select id="tema" onchange="trocarTema()">
 <optgroup label="Claros">
-<option value="">Claro</option><option value="paper">Paper</option><option value="cotton">Cotton</option><option value="book">Book</option><option value="ivory">Ivory</option><option value="latte">Latte</option><option value="sepia">Sepia</option><option value="honey">Honey</option><option value="matcha">Matcha</option><option value="mint">Mint</option><option value="ice">Ice</option><option value="ocean-light">Ocean Light</option><option value="rose">Rose</option><option value="wood">Wood</option><option value="gruvbox-light">Gruvbox Light</option><option value="solarized-light">Solarized Light</option>
+<option value="">Claro</option><option value="blue">Azul</option><option value="book">Book</option><option value="cotton">Cotton</option><option value="gruvbox-light">Gruvbox Light</option><option value="honey">Honey</option><option value="ice">Ice</option><option value="ivory">Ivory</option><option value="latte">Latte</option><option value="lilac-light">Lilás Claro</option><option value="matcha">Matcha</option><option value="mint">Mint</option><option value="ocean-light">Ocean Light</option><option value="paper">Paper</option><option value="purple-light">Roxo Claro</option><option value="rose">Rose</option><option value="sepia">Sepia</option><option value="solarized-light">Solarized Light</option><option value="wood">Wood</option>
 </optgroup><optgroup label="Escuros">
-<option value="dark">Escuro</option><option value="black-oled">Black OLED</option><option value="dracula">Dracula</option><option value="nord">Nord</option><option value="tokyo-night">Tokyo Night</option><option value="one-dark">One Dark</option><option value="monokai">Monokai</option><option value="material-dark">Material Dark</option><option value="material-palenight">Material Palenight</option><option value="night-owl">Night Owl</option><option value="github-dark">GitHub Dark</option><option value="vscode-dark">VS Code Dark+</option><option value="ayu-dark">Ayu Dark</option><option value="ayu-mirage">Ayu Mirage</option><option value="everforest">Everforest</option><option value="gruvbox-dark">Gruvbox Dark</option><option value="catppuccin-mocha">Catppuccin Mocha</option><option value="catppuccin-macchiato">Catppuccin Macchiato</option><option value="catppuccin-frappe">Catppuccin Frappé</option><option value="forest">Forest</option><option value="blue">Blue</option><option value="midnight">Midnight</option><option value="nebula">Nebula</option><option value="galaxy">Galaxy</option><option value="deep-space">Deep Space</option><option value="cyberpunk">Cyberpunk</option><option value="synthwave">Synthwave</option><option value="ember">Ember</option><option value="aurora">Aurora</option><option value="space-gray">Space Gray</option><option value="solarized-dark">Solarized Dark</option>
+<option value="dark">Escuro</option><option value="aurora">Aurora</option><option value="ayu-dark">Ayu Dark</option><option value="ayu-mirage">Ayu Mirage</option><option value="black-oled">Black OLED</option><option value="catppuccin-frappe">Catppuccin Frappé</option><option value="catppuccin-macchiato">Catppuccin Macchiato</option><option value="catppuccin-mocha">Catppuccin Mocha</option><option value="cyberpunk">Cyberpunk</option><option value="deep-space">Deep Space</option><option value="dracula">Dracula</option><option value="ember">Ember</option><option value="everforest">Everforest</option><option value="forest">Forest</option><option value="galaxy">Galaxy</option><option value="github-dark">GitHub Dark</option><option value="gruvbox-dark">Gruvbox Dark</option><option value="lilac-dark">Lilás Escuro</option><option value="material-dark">Material Dark</option><option value="material-palenight">Material Palenight</option><option value="midnight">Midnight</option><option value="monokai">Monokai</option><option value="nebula">Nebula</option><option value="night-owl">Night Owl</option><option value="nord">Nord</option><option value="one-dark">One Dark</option><option value="purple-dark">Roxo Escuro</option><option value="solarized-dark">Solarized Dark</option><option value="space-gray">Space Gray</option><option value="synthwave">Synthwave</option><option value="tokyo-night">Tokyo Night</option><option value="vscode-dark">VS Code Dark+</option>
 </optgroup></select><span class="layoutLabel">Posição:</span><select id="layout" onchange="trocarLayout()"><option value="left">Esquerda</option><option value="center">Centro</option><option value="right">Direita</option></select>
-""")
-html.append("""
-<script>
-document.addEventListener("DOMContentLoaded",()=>{
-document.querySelectorAll("#receita_print .linha_receita span[style*='flex:1']").forEach(c=>{
- const a=[...c.querySelectorAll("span")];
- a.forEach((e,i)=>{if(i<a.length-1)e.insertAdjacentText("beforeend",", ");});
-});
-});
-</script>
 """)
 html.append("</div>")
 TOTAL = largura + altura - 1
@@ -1054,24 +1067,30 @@ async function gerarEPUB(){
  botao.disabled=true; botao.textContent="Gerando EPUB…";
  try{
   const total=receita.length, quadrados=epubLargura*epubAltura, base=epubTitulo.replace(/\.[^.]+$/,""), id="urn:c2c:"+base;
-  const css=`body{font-family:sans-serif;line-height:1.45;margin:5%;color:#111}h1,h2{text-align:center}.capa,.metadados{text-align:center}.metadados{margin:1.5em 0}.progresso{width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #555;margin:1em 0 .35em}.progresso td{height:1em;padding:0;font-size:1px;line-height:1px}.progresso-preenchimento{background:#4caf50}.progresso-restante{background:#eee}.receita{text-align:center;margin:2em 0}.instrucao{display:inline;font-weight:bold}.bloco{display:inline-block;padding:.25em .45em;margin:.12em;border:1px solid #222;font-weight:bold;border-radius:.2em}nav ol{padding-left:1.4em}`;
+  const css=`body{font-family:sans-serif;line-height:1.45;margin:5%;color:#111}h1,h2{text-align:center}.capa,.metadados{text-align:center}.metadados{margin:1.5em 0}.progresso{width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #555;margin:1em 0 .35em}.progresso td{height:1em;padding:0;font-size:1px;line-height:1px}.progresso-preenchimento{background:#4caf50}.progresso-restante{background:#eee}.receita{text-align:center;margin:2em 0}.instrucao{display:inline;font-weight:bold}.bloco{display:inline-block;padding:.25em .45em;margin:.12em;border:1px solid #222;font-weight:bold;border-radius:.2em}.concluida{text-decoration:line-through 2px currentColor;opacity:.58;filter:saturate(.65)}nav ol{padding-left:1.4em}`;
   const capa=epubDocumento(epubTitulo,`<section class="capa" epub:type="cover"><h1>${epubEscapar(epubTitulo)}</h1><div class="metadados"><p><strong>Tamanho:</strong> ${epubLargura} × ${epubAltura}</p><p><strong>Total de cores:</strong> ${epubTotalCores}</p><p><strong>Total de quadrados:</strong> ${quadrados}</p></div></section>`);
-  const capitulos=[];
-  function adicionarCapitulo(indice,itens,ordem,nome){
-   const linha=indice+1, feitos=acumulado[indice], percentual=feitos*100/quadrados;
-   const titulo=`Linha ${linha} de ${total} — Ordem ${ordem}`;
-   const instrucoes=usarNome
-    ? itens.map(item=>`<span class="instrucao">(${item.qtd}) ${epubEscapar(item.nome)}</span>`).join(", ")
-    : itens.map(item=>`<span class="bloco" style="background-color:${item.bg};color:${item.fg}">${epubEscapar(item.codigo)}×${item.qtd}</span>`).join("");
-   const restante=100-percentual;
-   const corpo=`<section epub:type="chapter"><h1>${epubEscapar(titulo)}</h1><table class="progresso" role="presentation" aria-label="Progresso acumulado: ${percentual.toFixed(1)}%"><tr><td class="progresso-preenchimento" style="width:${percentual.toFixed(1)}%">&#160;</td><td class="progresso-restante" style="width:${restante.toFixed(1)}%">&#160;</td></tr></table><p><strong>Progresso acumulado:</strong> ${feitos} de ${quadrados} quadrados (${percentual.toFixed(1)}%)</p><div class="receita">${instrucoes}</div></section>`;
-   capitulos.push({nome,titulo,conteudo:epubDocumento(titulo,corpo)});
+  const capitulos=[], indiceCapitulos=[];
+  function adicionarPaginas(indice,itens,ordem,prefixo){
+   const linha=indice+1, blocosAnteriores=indice>0?acumulado[indice-1]:0, totalInstrucoes=itens.length;
+   for(let concluidas=0;concluidas<=totalInstrucoes;concluidas++){
+    const feitos=blocosAnteriores+itens.slice(0,concluidas).reduce((soma,item)=>soma+item.qtd,0), percentual=feitos*100/quadrados;
+    const tituloBase=`Linha ${linha} de ${total} — Ordem ${ordem}`;
+    const titulo=`${tituloBase} — Passo ${concluidas} de ${totalInstrucoes}`;
+    const instrucoes=usarNome
+     ? itens.map((item,indiceItem)=>`<span class="instrucao${indiceItem<concluidas?' concluida':''}">(${item.qtd}) ${epubEscapar(item.nome)}</span>`).join(", ")
+     : itens.map((item,indiceItem)=>`<span class="bloco${indiceItem<concluidas?' concluida':''}" style="background-color:${item.bg};color:${item.fg}">${epubEscapar(item.codigo)}×${item.qtd}</span>`).join("");
+    const restante=100-percentual, nome=`${prefixo}-passo-${concluidas}.xhtml`;
+    const corpo=`<section epub:type="chapter"><h1>${epubEscapar(tituloBase)}</h1><table class="progresso" role="presentation" aria-label="Progresso acumulado: ${percentual.toFixed(1)}%"><tr><td class="progresso-preenchimento" style="width:${percentual.toFixed(1)}%">&#160;</td><td class="progresso-restante" style="width:${restante.toFixed(1)}%">&#160;</td></tr></table><p><strong>Progresso acumulado:</strong> ${feitos} de ${quadrados} quadrados (${percentual.toFixed(1)}%)</p><p><strong>Instruções concluídas:</strong> ${concluidas} de ${totalInstrucoes}</p><div class="receita">${instrucoes}</div></section>`;
+    const capitulo={nome,titulo,conteudo:epubDocumento(titulo,corpo)};
+    capitulos.push(capitulo);
+    if(concluidas===0) indiceCapitulos.push({...capitulo,titulo:tituloBase});
+   }
   }
-  receita.forEach((itens,indice)=>adicionarCapitulo(indice,itens,"normal",`linha-${indice+1}.xhtml`));
-  receita.forEach((itens,indice)=>adicionarCapitulo(indice,[...itens].reverse(),"inversa",`linha-inversa-${indice+1}.xhtml`));
-  const navItens=[`<li><a href="cover.xhtml">Capa</a></li>`,...capitulos.map(c=>`<li><a href="${c.nome}">${epubEscapar(c.titulo)}</a></li>`)].join("");
+  receita.forEach((itens,indice)=>adicionarPaginas(indice,itens,"normal",`linha-${indice+1}`));
+  receita.forEach((itens,indice)=>adicionarPaginas(indice,[...itens].reverse(),"inversa",`linha-inversa-${indice+1}`));
+  const navItens=[`<li><a href="cover.xhtml">Capa</a></li>`,...indiceCapitulos.map(c=>`<li><a href="${c.nome}">${epubEscapar(c.titulo)}</a></li>`)].join("");
   const nav=epubDocumento("Sumário",`<nav epub:type="toc" id="toc"><h1>Sumário</h1><ol>${navItens}</ol></nav>`);
-  const ncxPontos=[`<navPoint id="nav-cover" playOrder="1"><navLabel><text>Capa</text></navLabel><content src="cover.xhtml" /></navPoint>`,...capitulos.map((c,i)=>`<navPoint id="nav-${i+1}" playOrder="${i+2}"><navLabel><text>${epubEscapar(c.titulo)}</text></navLabel><content src="${c.nome}" /></navPoint>`)].join("");
+  const ncxPontos=[`<navPoint id="nav-cover" playOrder="1"><navLabel><text>Capa</text></navLabel><content src="cover.xhtml" /></navPoint>`,...indiceCapitulos.map((c,i)=>`<navPoint id="nav-${i+1}" playOrder="${i+2}"><navLabel><text>${epubEscapar(c.titulo)}</text></navLabel><content src="${c.nome}" /></navPoint>`)].join("");
   const ncx=`<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd"><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head><meta name="dtb:uid" content="${epubEscapar(id)}" /></head><docTitle><text>${epubEscapar(epubTitulo)}</text></docTitle><navMap>${ncxPontos}</navMap></ncx>`;
   const manifest=capitulos.map((c,i)=>`<item id="capitulo-${i+1}" href="${c.nome}" media-type="application/xhtml+xml" />`).join("");
   const spine=capitulos.map((c,i)=>`<itemref idref="capitulo-${i+1}" />`).join("");
@@ -1092,6 +1111,21 @@ function abrirGrafico(){
 let i=0;
 let invertRecipe=localStorage.getItem('c2c_invert')==='1';
 let usarNome=localStorage.getItem('c2c_nomecor')==='1';
+let itensConcluidos={};
+try{
+ const salvo=JSON.parse(localStorage.getItem('c2c_itens_concluidos')||'{}');
+ if(salvo && typeof salvo==='object' && !Array.isArray(salvo)) itensConcluidos=salvo;
+}catch(e){}
+
+function obterConcluidos(){
+ const itens=itensConcluidos[i];
+ return new Set(Array.isArray(itens) ? itens : []);
+}
+function salvarConcluidos(concluidos){
+ itensConcluidos[i]=[...concluidos].sort((a,b)=>a-b);
+ localStorage.setItem('c2c_itens_concluidos',JSON.stringify(itensConcluidos));
+}
+
 function atualizar(){
 localStorage.setItem("c2c_linha",i);
 document.getElementById("infoLinha").textContent=`Linha ${i+1} de ${receita.length}`;
@@ -1101,13 +1135,16 @@ const wrap=document.createElement("div");
 wrap.className="linhaAtualReceita";
 const lay=document.body.classList.contains("focus-mode") ? (document.getElementById("layout")?.value||"left") : "left";
 wrap.style.justifyContent=lay==="left"?"flex-start":lay==="center"?"center":"flex-end";
-const lista=invertRecipe?[...receita[i]].reverse():receita[i];
-for(const item of lista){
+const lista=receita[i].map((item,indice)=>({item,indice}));
+if(invertRecipe) lista.reverse();
+const concluidos=obterConcluidos();
+for(const [pos,{item,indice}] of lista.entries()){
  const s=document.createElement("span");
+ if(concluidos.has(indice)) s.classList.add('item-feito');
  if(usarNome){
-  s.textContent='('+item.qtd+') '+item.nome+(lista.indexOf(item)<lista.length-1?', ':'');
+  s.textContent='('+item.qtd+') '+item.nome+(pos<lista.length-1?', ':'');
  }else{
-  s.className='bloco_receita';
+  s.classList.add('bloco_receita');
   s.textContent=item.codigo+'×'+item.qtd;
   s.style.background=item.bg;
   s.style.color=item.fg;
@@ -1116,7 +1153,7 @@ for(const item of lista){
 }
 alvo.appendChild(wrap);
 document.getElementById("irLinha").value=i+1;
-let feitos=acumulado[i];
+let feitos=(i>0?acumulado[i-1]:0)+[...concluidos].reduce((soma,indice)=>soma+receita[i][indice].qtd,0);
 let total=acumulado[acumulado.length-1];
 let pct=feitos*100/total;
 document.getElementById("barraProgresso").style.width=pct+"%";
@@ -1127,6 +1164,31 @@ function anterior(){if(i>0){i--;
 
  atualizar();}}
 function proxima(){if(i<receita.length-1){i++;atualizar();}}
+function marcarProximo(){
+ const concluidos=obterConcluidos();
+ const lista=receita[i].map((_,indice)=>indice);
+ if(invertRecipe) lista.reverse();
+ const proximo=lista.find(indice=>!concluidos.has(indice));
+ if(proximo!==undefined){
+  concluidos.add(proximo);
+  salvarConcluidos(concluidos);
+  atualizar();
+ }else if(i<receita.length-1){
+  i++;
+  atualizar();
+ }
+}
+function marcarAnterior(){
+ const concluidos=obterConcluidos();
+ const lista=receita[i].map((_,indice)=>indice);
+ if(invertRecipe) lista.reverse();
+ const anterior=[...lista].reverse().find(indice=>concluidos.has(indice));
+ if(anterior!==undefined){
+  concluidos.delete(anterior);
+  salvarConcluidos(concluidos);
+  atualizar();
+ }
+}
 function irPara(){
  let v=parseInt(document.getElementById("irLinha").value);
  if(!isNaN(v)&&v>=1&&v<=receita.length){
@@ -1165,11 +1227,11 @@ document.addEventListener("keydown", function(e){
     switch(e.key){
       case "ArrowLeft":
         e.preventDefault();
-        anterior();
+        marcarAnterior();
         break;
       case "ArrowRight":
         e.preventDefault();
-        proxima();
+        marcarProximo();
         break;
       case "z":
       case "Z":
@@ -1234,17 +1296,17 @@ function imprimirNormal(){
 }
 
 function prepararImpressao(){
- document.querySelectorAll('[id^="dirprint"]').forEach((e,idx)=>{
-   
- });
  const linhas=document.querySelectorAll('#receita_print .linha_receita');
  linhas.forEach((linha)=>{
    const alvo=linha.querySelector('span[style*="flex:1"]');
    if(!alvo)return;
-   const blocos=[...alvo.querySelectorAll('.bloco_receita')];
-   if(invertRecipe){
-      blocos.reverse().forEach(b=>alvo.appendChild(b));
-   }
+   const instrucoes=[...alvo.querySelectorAll('.instrucao_impressao')];
+   instrucoes.sort((a,b)=>{
+     const ordem=Number(a.dataset.ordem)-Number(b.dataset.ordem);
+     return invertRecipe ? -ordem : ordem;
+   });
+   alvo.replaceChildren();
+   alvo.append(...instrucoes);
  });
 }
 window.addEventListener('afterprint',prepararImpressao);
@@ -1269,7 +1331,7 @@ window.onload=function(){
 
  let s=parseInt(localStorage.getItem("c2c_linha"));
  if(!isNaN(s) && s>=0 && s<receita.length) i=s;
- document.getElementById("atalhos").textContent="← → Navegar • Z Modo Zen • Digite um número para ir para uma linha";
+ document.getElementById("atalhos").textContent="← Desfazer instrução • → Concluir instrução • Z Modo Zen • Digite um número para ir para uma linha";
 let th=localStorage.getItem("c2c_theme")||"";
 let lay=localStorage.getItem("c2c_layout")||"left";
 document.getElementById("layout").value=lay;
@@ -1327,6 +1389,8 @@ for d in range(TOTAL):
     if d % 2 == 0:
         pontos.reverse()
 
+    ordem_instrucao = 0
+
     for x, y in pontos:
 
         cor = pixels[x, y]
@@ -1343,8 +1407,9 @@ for d in range(TOTAL):
                 texto = cor_texto(r, g, b)
 
                 html.append(
-                    f'<span>({quantidade}) {nome_cor(r,g,b)}</span>'
+                    f'<span class="instrucao_impressao" data-ordem="{ordem_instrucao}">({quantidade}) {nome_cor(r,g,b)}</span>'
                 )
+                ordem_instrucao += 1
 
             ultima_cor = cor
             quantidade = 1
@@ -1356,7 +1421,7 @@ for d in range(TOTAL):
         texto = cor_texto(r, g, b)
 
         html.append(
-            f'<span>({quantidade}) {nome_cor(r,g,b)}</span>'
+            f'<span class="instrucao_impressao" data-ordem="{ordem_instrucao}">({quantidade}) {nome_cor(r,g,b)}</span>'
         )
 
     html.append("</div>")

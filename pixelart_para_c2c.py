@@ -1085,19 +1085,32 @@ function epubCrc32(bytes){
  }
  return (crc^0xffffffff)>>>0;
 }
-function epubZip(arquivos){
+async function epubZip(arquivos){
  const partes=[], central=[], encoder=new TextEncoder(); let deslocamento=0;
  for(const arquivo of arquivos){
   const nome=encoder.encode(arquivo.nome), dados=epubBytes(arquivo.dados), crc=epubCrc32(dados);
-  const local=new Uint8Array(30+nome.length+dados.length), view=new DataView(local.buffer);
+  let armazenados=dados, metodo=0;
+
+  // O mimetype precisa permanecer sem compressão e ser o primeiro arquivo do EPUB.
+  if(arquivo.nome!=="mimetype"){
+   const stream=new Blob([dados]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+   armazenados=new Uint8Array(await new Response(stream).arrayBuffer());
+   metodo=8;
+  }
+
+  const local=new Uint8Array(30+nome.length+armazenados.length), view=new DataView(local.buffer);
   view.setUint32(0,0x04034b50,true); view.setUint16(4,20,true); view.setUint16(6,0x0800,true);
-  view.setUint16(8,0,true); view.setUint32(14,crc,true); view.setUint32(18,dados.length,true); view.setUint32(22,dados.length,true);
-  view.setUint16(26,nome.length,true); local.set(nome,30); local.set(dados,30+nome.length);
+  view.setUint16(8,metodo,true); view.setUint32(14,crc,true);
+  view.setUint32(18,armazenados.length,true); view.setUint32(22,dados.length,true);
+  view.setUint16(26,nome.length,true); local.set(nome,30); local.set(armazenados,30+nome.length);
   partes.push(local);
+
   const registro=new Uint8Array(46+nome.length), cview=new DataView(registro.buffer);
-  cview.setUint32(0,0x02014b50,true); cview.setUint16(4,20,true); cview.setUint16(6,20,true); cview.setUint16(8,0x0800,true);
-  cview.setUint16(10,0,true); cview.setUint32(16,crc,true); cview.setUint32(20,dados.length,true); cview.setUint32(24,dados.length,true);
-  cview.setUint16(28,nome.length,true); cview.setUint32(42,deslocamento,true); registro.set(nome,46); central.push(registro);
+  cview.setUint32(0,0x02014b50,true); cview.setUint16(4,20,true); cview.setUint16(6,20,true);
+  cview.setUint16(8,0x0800,true); cview.setUint16(10,metodo,true); cview.setUint32(16,crc,true);
+  cview.setUint32(20,armazenados.length,true); cview.setUint32(24,dados.length,true);
+  cview.setUint16(28,nome.length,true); cview.setUint32(42,deslocamento,true);
+  registro.set(nome,46); central.push(registro);
   deslocamento+=local.length;
  }
  const tamanhoCentral=central.reduce((s,p)=>s+p.length,0), fim=new Uint8Array(22), fview=new DataView(fim.buffer);
@@ -1115,36 +1128,54 @@ async function gerarEPUB(){
  botao.disabled=true; botao.textContent="Gerando EPUB…";
  try{
   const total=receita.length, quadrados=epubLargura*epubAltura, base=epubTitulo.replace(/\\.[^.]+$/,""), id="urn:c2c:"+base, anoGeracao=new Date().getFullYear(), tecnicaEpub=nomeTecnica();
-  const css=`body{font-family:sans-serif;line-height:1.45;margin:5%;color:#111}h1,h2{text-align:center}.capa,.metadados{text-align:center}.capa{margin:-5%}.capa-imagem{display:block;width:100%;height:auto}.metadados{margin:1.5em 0}.progresso{width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #555;margin:1em 0 .35em}.progresso td{height:1em;padding:0;font-size:1px;line-height:1px}.progresso-preenchimento{background:#4caf50}.progresso-restante{background:#eee}.receita{text-align:center;margin:2em 0}.instrucao{display:inline;font-weight:bold}.bloco{display:inline-block;padding:.25em .45em;margin:.12em;border:1px solid #222;font-weight:bold;border-radius:.2em}.concluida{text-decoration:line-through 2px currentColor;opacity:.58;filter:saturate(.65)}nav ol{padding-left:1.4em}`;
+  const css=`body{font-family:sans-serif;line-height:1.45;margin:5%;color:#111}h1,h2{text-align:center}.capa,.metadados{text-align:center}.capa{margin:-5%}.capa-imagem{display:block;width:100%;height:auto}.metadados{margin:1.5em 0}.progresso{width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #555;margin:1em 0 .35em}.progresso td{height:1em;padding:0;font-size:1px;line-height:1px}.progresso-preenchimento{background:#4caf50}.progresso-restante{background:#eee}.receita{text-align:center;margin:2em 0}.instrucao{display:inline;font-weight:bold}.bloco{display:inline-block;padding:.25em .45em;margin:.12em;border:1px solid #222;font-weight:bold;border-radius:.2em}.concluida{text-decoration:line-through 2px currentColor;opacity:.58;filter:saturate(.65)}.etapa{break-before:page;page-break-before:always}nav ol{padding-left:1.4em}`;
   const capa=epubDocumento(epubTitulo,`<section class="capa" epub:type="cover"><img class="capa-imagem" src="capa.png" alt="${epubEscapar(epubTitulo)}" /></section>`);
-  const capitulos=[], indiceCapitulos=[];const infoNome="informacoes.xhtml";const infoTitulo="Informações";const infoCorpo=`<section class="metadados"><h1>${epubEscapar(base)}</h1><p><strong>Tamanho:</strong> ${epubLargura} × ${epubAltura}</p><p><strong>Total de cores:</strong> ${epubTotalCores}</p><p><strong>Total de quadrados:</strong> ${quadrados}</p><p><strong>Técnica:</strong> ${epubEscapar(tecnicaEpub)}</p></section>`;capitulos.push({nome:infoNome,titulo:infoTitulo,conteudo:epubDocumento(infoTitulo,infoCorpo)});indiceCapitulos.push({nome:infoNome,titulo:infoTitulo});
+  const ordemEpub=invertRecipe?"Inversa":"Normal";
+  const capitulos=[], indiceCapitulos=[];const infoNome="informacoes.xhtml";const infoTitulo="Informações";const infoCorpo=`<section class="metadados"><h1>${epubEscapar(base)}</h1><p><strong>Tamanho:</strong> ${epubLargura} × ${epubAltura}</p><p><strong>Total de cores:</strong> ${epubTotalCores}</p><p><strong>Total de quadrados:</strong> ${quadrados}</p><p><strong>Técnica:</strong> ${epubEscapar(tecnicaEpub)}</p><p><strong>Ordem:</strong> ${ordemEpub}</p></section>`;capitulos.push({nome:infoNome,titulo:infoTitulo,conteudo:epubDocumento(infoTitulo,infoCorpo)});indiceCapitulos.push({nome:infoNome,titulo:infoTitulo});
   function adicionarPaginas(indice,itens,ordem,prefixo){
    const linha=indice+1, blocosAnteriores=indice>0?acumulado[indice-1]:0, totalInstrucoes=itens.length;
-   for(let concluidas=0;concluidas<=totalInstrucoes;concluidas++){
-    const feitos=blocosAnteriores+itens.slice(0,concluidas).reduce((soma,item)=>soma+item.qtd,0), percentual=feitos*100/quadrados;
+   const etapasLinha=[];
+   let pagina=0;
+   const paginas=[{indiceItem:-1,contador:null,final:false}];
+   itens.forEach((item,indiceItem)=>{
+    for(let contador=1;contador<=item.qtd;contador++){
+     paginas.push({indiceItem,contador,final:contador===item.qtd});
+    }
+   });
+   paginas.forEach((estado)=>{
+    const {indiceItem,contador,final}=estado;
+    let feitos=blocosAnteriores;
+    if(indiceItem>=0){
+     feitos+=itens.slice(0,indiceItem).reduce((soma,item)=>soma+item.qtd,0);
+     if(contador!==null) feitos+=contador;
+    }
+    const percentual=feitos*100/quadrados;
     const tituloBase=`Linha ${linha} de ${total} — Ordem ${ordem}`;
-    const titulo=`${tituloBase} — Passo ${concluidas} de ${totalInstrucoes}`;
     const instrucoes=usarNome
-     ? itens.map((item,indiceItem)=>`<span class="instrucao${indiceItem<concluidas?' concluida':''}">(${item.qtd}) ${epubEscapar(item.nome)}</span>`).join(", ")
-     : itens.map((item,indiceItem)=>`<span class="bloco${indiceItem<concluidas?' concluida':''}" style="background-color:${item.bg};color:${item.fg}">${epubEscapar(item.codigo)}×${item.qtd}</span>`).join("");
-    const restante=100-percentual, nome=`${prefixo}-passo-${concluidas}.xhtml`;
-    const corpo=`<section epub:type="chapter"><h1>${epubEscapar(tituloBase)}</h1><table class="progresso" role="presentation" aria-label="Progresso acumulado: ${percentual.toFixed(1)}%"><tr><td class="progresso-preenchimento" style="width:${percentual.toFixed(1)}%">&#160;</td><td class="progresso-restante" style="width:${restante.toFixed(1)}%">&#160;</td></tr></table><p><strong>Progresso acumulado:</strong> ${feitos} de ${quadrados} quadrados (${percentual.toFixed(1)}%)</p><p><strong>Instruções concluídas:</strong> ${concluidas} de ${totalInstrucoes}</p><div class="receita">${instrucoes}</div></section>`;
-    const capitulo={nome,titulo,conteudo:epubDocumento(titulo,corpo)};
-    capitulos.push(capitulo);
-    if(concluidas===0) indiceCapitulos.push({...capitulo,titulo:tituloBase});
-   }
+     ? itens.map((item,indiceItemAtual)=>`<span class="instrucao${indiceItemAtual<indiceItem || (indiceItemAtual===indiceItem && final)?' concluida':''}">(${item.qtd}) ${epubEscapar(item.nome)}</span>`).join(", ")
+     : itens.map((item,indiceItemAtual)=>`<span class="bloco${indiceItemAtual<indiceItem || (indiceItemAtual===indiceItem && final)?' concluida':''}" style="background-color:${item.bg};color:${item.fg}">${epubEscapar(item.codigo)}×${item.qtd}</span>`).join("");
+    const ancora=`${prefixo}-passo-${pagina++}`;
+    const etapaClasse=pagina===1?'':'etapa';
+    const etapaEstilo=pagina===1?'':' style="page-break-before:always;break-before:page"';
+    const contadorHtml=contador!==null && !final ? `<p style="text-align:center;margin-top:1.5em"><strong>Quadrados feitos: ${contador}</strong></p>` : "";
+    const corpo=`<section id="${ancora}" class="${etapaClasse}"${etapaEstilo} epub:type="chapter"><h1>${epubEscapar(tituloBase)}</h1><table class="progresso" role="presentation" aria-label="Progresso acumulado: ${percentual.toFixed(1)}%"><tr><td class="progresso-preenchimento" style="width:${percentual.toFixed(1)}%">&#160;</td><td class="progresso-restante" style="width:${100-percentual.toFixed(1)}%">&#160;</td></tr></table><p><strong>Progresso acumulado:</strong> ${feitos} de ${quadrados} quadrados (${percentual.toFixed(1)}%)</p><p style="margin-top:1em"><strong>Instruções concluídas:</strong> ${indiceItem<0?0:indiceItem+(final?1:0)} de ${totalInstrucoes}</p><div class="receita">${instrucoes}</div>${contadorHtml}</section>`;
+    const nomeEtapa=`${prefixo}-passo-${pagina-1}.xhtml`;
+    const capituloEtapa={nome:nomeEtapa,titulo:tituloBase,conteudo:epubDocumento(tituloBase,corpo)};
+    capitulos.push(capituloEtapa);
+    if(pagina===1) indiceCapitulos.push({nome:nomeEtapa,titulo:tituloBase});
+   });
   }
-  receita.forEach((itens,indice)=>adicionarPaginas(indice,itens,"normal",`linha-${indice+1}`));
-  receita.forEach((itens,indice)=>adicionarPaginas(indice,[...itens].reverse(),"inversa",`linha-inversa-${indice+1}`));
+
+  receita.forEach((itens,indice)=>adicionarPaginas(indice,invertRecipe?[...itens].reverse():itens,ordemEpub,`${invertRecipe?'linha-inversa':'linha'}-${indice+1}`));
   const navItens=[`<li><a href="cover.xhtml">Capa</a></li>`,...indiceCapitulos.map(c=>`<li><a href="${c.nome}">${epubEscapar(c.titulo)}</a></li>`)].join("");
   const nav=epubDocumento("Sumário",`<nav epub:type="toc" id="toc"><h1>Sumário</h1><ol>${navItens}</ol></nav>`);
   const ncxPontos=[`<navPoint id="nav-cover" playOrder="1"><navLabel><text>Capa</text></navLabel><content src="cover.xhtml" /></navPoint>`,...indiceCapitulos.map((c,i)=>`<navPoint id="nav-${i+1}" playOrder="${i+2}"><navLabel><text>${epubEscapar(c.titulo)}</text></navLabel><content src="${c.nome}" /></navPoint>`)].join("");
   const ncx=`<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd"><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head><meta name="dtb:uid" content="${epubEscapar(id)}" /></head><docTitle><text>${epubEscapar(epubTitulo)}</text></docTitle><navMap>${ncxPontos}</navMap></ncx>`;
   const manifest=capitulos.map((c,i)=>`<item id="capitulo-${i+1}" href="${c.nome}" media-type="application/xhtml+xml" />`).join("");
-  const spine=capitulos.map((c,i)=>`<itemref idref="capitulo-${i+1}" />`).join("");
-  const opf=`<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="book-id" version="3.0" xml:lang="pt-BR"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="book-id">${epubEscapar(id)}</dc:identifier><dc:title>${epubEscapar(epubTitulo)}</dc:title><dc:creator>Neto</dc:creator><dc:publisher>Alecrim e Tomilho</dc:publisher><dc:date>${anoGeracao}</dc:date><dc:language>pt-BR</dc:language><meta name="cover" content="capa-imagem" /></metadata><manifest><item id="cover" href="cover.xhtml" media-type="application/xhtml+xml" /><item id="capa-imagem" href="capa.png" media-type="image/png" properties="cover-image" /><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" /><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" /><item id="style" href="style.css" media-type="text/css" />${manifest}</manifest><spine toc="ncx"><itemref idref="cover" />${spine}</spine><guide><reference type="cover" title="Capa" href="cover.xhtml" /></guide></package>`;
+  const spine=capitulos.map((c,i)=>`<itemref idref="capitulo-${i+1}" linear="yes" />`).join("");
+  const opf=`<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="book-id" version="3.0" xml:lang="pt-BR"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="book-id">${epubEscapar(id)}</dc:identifier><dc:title>${epubEscapar(epubTitulo)}</dc:title><dc:creator>Neto</dc:creator><dc:publisher>Alecrim e Tomilho</dc:publisher><dc:date>${anoGeracao}</dc:date><dc:language>pt-BR</dc:language><meta name="cover" content="capa-imagem" /></metadata><manifest><item id="cover" href="cover.xhtml" media-type="application/xhtml+xml" /><item id="capa-imagem" href="capa.png" media-type="image/png" properties="cover-image" /><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav" /><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" /><item id="style" href="style.css" media-type="text/css" />${manifest}</manifest><spine toc="ncx"><itemref idref="cover" linear="yes" />${spine}</spine><guide><reference type="cover" title="Capa" href="cover.xhtml" /></guide></package>`;
   const arquivos=[{nome:"mimetype",dados:"application/epub+zip"},{nome:"META-INF/container.xml",dados:'<?xml version="1.0" encoding="UTF-8"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml" /></rootfiles></container>'},{nome:"OEBPS/style.css",dados:css},{nome:"OEBPS/capa.png",dados:epubImagemBytes(epubCapa)},{nome:"OEBPS/cover.xhtml",dados:capa},{nome:"OEBPS/nav.xhtml",dados:nav},{nome:"OEBPS/toc.ncx",dados:ncx},{nome:"OEBPS/content.opf",dados:opf},...capitulos.map(c=>({nome:"OEBPS/"+c.nome,dados:c.conteudo}))];
-  const url=URL.createObjectURL(epubZip(arquivos)), link=document.createElement("a"); link.href=url; link.download=base+".epub"; link.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const url=URL.createObjectURL(await epubZip(arquivos)), link=document.createElement("a"); link.href=url; link.download=base+".epub"; link.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
  }finally{ botao.disabled=false; botao.textContent="Gerar EPUB"; }
 }
 
@@ -1249,6 +1280,9 @@ function marcarAnterior(){
  if(anterior!==undefined){
   concluidos.delete(anterior);
   salvarConcluidos(concluidos);
+  atualizar();
+ }else if(i>0){
+  i--;
   atualizar();
  }
 }

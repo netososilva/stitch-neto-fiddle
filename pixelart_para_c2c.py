@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageTk
 from collections import Counter
 import base64
 from html import escape
@@ -8,16 +8,66 @@ import string
 import sys
 import os
 import zipfile
+import subprocess
+import tkinter as tk
+from tkinter import filedialog, messagebox
 from datetime import date
 
 # ==========================
 # Verificação dos argumentos
 # ==========================
 
+def abrir_seletor_de_projetos():
+    """Mantém uma janela aberta para gerar vários projetos, um por vez."""
+    janela = tk.Tk()
+    janela.title("Alecrim e Tomilho — Gerador de receitas")
+    janela.geometry("560x440")
+    janela.minsize(480, 380)
+    janela.configure(bg="#170f23")
+
+    painel = tk.Frame(janela, bg="#21152f", padx=34, pady=30)
+    painel.pack(fill="both", expand=True, padx=18, pady=18)
+
+    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "alecrim-tomilho-logo.png")
+    try:
+        logo = Image.open(logo_path).convert("RGBA")
+        logo.thumbnail((430, 170), Image.Resampling.LANCZOS if hasattr(Image, "Resampling") else Image.LANCZOS)
+        logo_tk = ImageTk.PhotoImage(logo)
+        tk.Label(painel, image=logo_tk, bg="#21152f").pack(pady=(0, 18))
+    except Exception:
+        tk.Label(painel, text="Alecrim e Tomilho", fg="#f5edff", bg="#21152f", font=("Georgia", 25, "bold")).pack(pady=(0, 18))
+
+    tk.Label(painel, text="Gerador de receitas Pixel Art", fg="#f5edff", bg="#21152f", font=("Segoe UI", 16, "bold")).pack()
+    tk.Label(painel, text="Escolha uma imagem por vez. A janela continuará aberta para o próximo projeto.", fg="#c2b2d1", bg="#21152f", wraplength=430, justify="center", font=("Segoe UI", 10)).pack(pady=(8, 24))
+
+    status = tk.Label(painel, text="Pronto para começar", fg="#c7a6e8", bg="#21152f", font=("Segoe UI", 10))
+    status.pack(pady=(0, 14))
+
+    def escolher_arquivo():
+        caminho = filedialog.askopenfilename(
+            parent=janela,
+            title="Escolha uma imagem",
+            filetypes=[("Imagens", "*.png *.jpg *.jpeg *.bmp *.gif"), ("Todos os arquivos", "*.*")],
+        )
+        if not caminho:
+            return
+        status.config(text=f"Gerando: {os.path.basename(caminho)}", fg="#f0c674")
+        janela.update_idletasks()
+        resultado = subprocess.run([sys.executable, os.path.abspath(__file__), caminho], cwd=os.path.dirname(os.path.abspath(__file__)))
+        if resultado.returncode == 0:
+            saida = os.path.splitext(caminho)[0] + ".html"
+            status.config(text=f"Pronto: {os.path.basename(saida)}", fg="#a8e6a3")
+        else:
+            status.config(text="Não foi possível gerar o arquivo.", fg="#ff9b9b")
+
+    tk.Button(painel, text="Escolher imagem", command=escolher_arquivo, bg="#8b5fbf", activebackground="#b794f4", fg="white", activeforeground="white", relief="flat", padx=22, pady=10, font=("Segoe UI", 11, "bold")).pack()
+    tk.Button(painel, text="Fechar", command=janela.destroy, bg="#302442", activebackground="#49365e", fg="#f5edff", relief="flat", padx=22, pady=8, font=("Segoe UI", 10)).pack(pady=(14, 0))
+    janela.mainloop()
+
+
 if len(sys.argv) != 2:
-    print("Uso:")
-    print("python pixelart_para_c2c.py <arquivo.png>")
-    sys.exit(1)
+    abrir_seletor_de_projetos()
+    sys.exit(0)
 
 ARQUIVO = sys.argv[1]
 
@@ -260,7 +310,7 @@ table{
         background:#fff !important;
         border-color:#888 !important;
     }
-    #receita_tela,#controlesExecucao,#controles,#configuracoes,#containerBarra,#textoProgresso,#linhaAtual,#infoLinha,#atalhos,button[onclick="abrirGrafico()"]{display:none !important;}
+    #receita_tela,#controlesExecucao,#controles,#configuracoes,#containerBarra,#textoProgresso,#contadorQuadrados,#linhaAtual,#infoLinha,#atalhos,button[onclick="abrirGrafico()"]{display:none !important;}
 
     #titulo-grafico,#grid{display:none !important;}
     #titulo-grafico-print,#grid_print,#receita_print,#informacoes,#tituloCores,#legenda{display:block !important;}
@@ -374,6 +424,32 @@ button{
     box-shadow:inset 0 0 0 1px currentColor;
 }
 
+#contadorQuadrados{
+    min-height:20px;
+    margin:0 0 10px;
+    text-align:left;
+}
+#contadorQuadrados.contador-vazio{display:none!important}
+#contadorQuadrados.contador-elegante,
+#contadorQuadrados.contador-atual{
+    display:table;
+    padding:5px 14px;
+    font-size:14px;
+    font-weight:bold;
+}
+#contadorQuadrados.contador-elegante{
+    border:1px solid var(--border);
+    border-radius:6px;
+    background:var(--panel);
+    color:var(--text);
+    box-shadow:0 1px 3px rgba(0,0,0,.12);
+}
+#contadorQuadrados.contador-atual{
+    border:1px solid transparent;
+}
+body.focus-mode.layout-center #contadorQuadrados{margin-left:auto;margin-right:auto;text-align:center}
+body.focus-mode.layout-right #contadorQuadrados{margin-left:auto;margin-right:0;text-align:right}
+
 #atalhos{
     margin-top:10px;
     font-size:13px;
@@ -435,7 +511,8 @@ table,#legenda td,#legenda th{
 }
 }
 #grid th{background:var(--header)!important;}
-button,input[type="number"]{background:var(--button);color:var(--text);border:1px solid var(--border);}
+button,input[type="number"],select{background:var(--button);color:var(--text);border:1px solid var(--border);}
+select option{background:var(--panel);color:var(--text);}
 #barraProgresso{background:var(--progress)!important;}
 body.theme-dark{--bg:#202124;--text:#eee;--panel:#2b2b2b;--border:#666;--header:#3a3a3a;--button:#444;--progress:#66bb6a;}
 body.theme-dracula{--bg:#282A36;--text:#F8F8F2;--panel:#343746;--border:#6272A4;--header:#44475A;--button:#44475A;--progress:#50FA7B;}
@@ -908,6 +985,7 @@ html.append('<h2 id="tituloTecnica">Instruções C2C</h2>')
 html.append('<div id="infoLinha" style="font-weight:bold;margin-bottom:10px"></div>')
 html.append('<div id="containerBarra"><div id="barraProgresso"></div></div>')
 html.append('<div id="textoProgresso" style="font-size:13px;margin-bottom:10px"></div>')
+html.append('<div id="contadorQuadrados" class="contador-elegante" aria-live="polite"></div>')
 html.append('<div id="linhaAtual" style="min-height:60px;margin-top:28px;margin-bottom:10px"></div>')
 html.append('<div id="controlesExecucao">')
 html.append('<button onclick="marcarAnterior()">← Anterior</button>')
@@ -925,9 +1003,11 @@ html.append('<div id="acoes">')
 html.append('<button onclick="imprimirNormal()" id="btnImprimir">Imprimir</button>')
 html.append('<button onclick="salvarPDF()" id="btnPDF">Salvar PDF</button>')
 html.append('<button onclick="gerarEPUB()" id="btnEPUB">Gerar EPUB</button>')
+html.append('<button onclick="gerarEPUBComContador()" id="btnEPUBContador">Gerar EPUB com contador</button>')
 html.append('<button onclick="toggleZen()" id="btnZen">Modo Zen</button>')
 html.append('<button id="btnInvert" onclick="toggleInvert()">Inverter ordem</button>')
 html.append('<button id="btnNomeCor" onclick="toggleNomeCor()">Blocos</button>')
+html.append('<button id="btnEstiloContador" onclick="toggleEstiloContador()">Usar contador atual</button>')
 html.append('</div>')
 html.append('<div id="configuracoes">')
 html.append('<span>Técnica:</span><select id="tecnica" onchange="trocarTecnica()"><option value="c2c">C2C</option><option value="linha">Linha a linha</option></select>')
@@ -1123,24 +1203,26 @@ function epubImagemBytes(dataUri){
  for(let i=0;i<binario.length;i++) bytes[i]=binario.charCodeAt(i);
  return bytes;
 }
+let epubComContadorAtual=false;
 async function gerarEPUB(){
- const botao=document.getElementById("btnEPUB");
- botao.disabled=true; botao.textContent="Gerando EPUB…";
+ const botao=document.getElementById(epubComContadorAtual?"btnEPUBContador":"btnEPUB");
+ botao.disabled=true; botao.textContent=epubComContadorAtual?"Gerando EPUB com contador…":"Gerando EPUB…";
  try{
   const total=receita.length, quadrados=epubLargura*epubAltura, base=epubTitulo.replace(/\\.[^.]+$/,""), id="urn:c2c:"+base, anoGeracao=new Date().getFullYear(), tecnicaEpub=nomeTecnica();
   const css=`body{font-family:sans-serif;line-height:1.45;margin:5%;color:#111}h1,h2{text-align:center}.capa,.metadados{text-align:center}.capa{margin:-5%}.capa-imagem{display:block;width:100%;height:auto}.metadados{margin:1.5em 0}.progresso{width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #555;margin:1em 0 .35em}.progresso td{height:1em;padding:0;font-size:1px;line-height:1px}.progresso-preenchimento{background:#4caf50}.progresso-restante{background:#eee}.receita{text-align:center;margin:2em 0}.instrucao{display:inline;font-weight:bold}.bloco{display:inline-block;padding:.25em .45em;margin:.12em;border:1px solid #222;font-weight:bold;border-radius:.2em}.concluida{text-decoration:line-through 2px currentColor;opacity:.58;filter:saturate(.65)}.etapa{break-before:page;page-break-before:always}nav ol{padding-left:1.4em}`;
   const capa=epubDocumento(epubTitulo,`<section class="capa" epub:type="cover"><img class="capa-imagem" src="capa.png" alt="${epubEscapar(epubTitulo)}" /></section>`);
   const ordemEpub=invertRecipe?"Inversa":"Normal";
-  const capitulos=[], indiceCapitulos=[];const infoNome="informacoes.xhtml";const infoTitulo="Informações";const infoCorpo=`<section class="metadados"><h1>${epubEscapar(base)}</h1><p><strong>Tamanho:</strong> ${epubLargura} × ${epubAltura}</p><p><strong>Total de cores:</strong> ${epubTotalCores}</p><p><strong>Total de quadrados:</strong> ${quadrados}</p><p><strong>Técnica:</strong> ${epubEscapar(tecnicaEpub)}</p><p><strong>Ordem:</strong> ${ordemEpub}</p></section>`;capitulos.push({nome:infoNome,titulo:infoTitulo,conteudo:epubDocumento(infoTitulo,infoCorpo)});indiceCapitulos.push({nome:infoNome,titulo:infoTitulo});
+  const formatoEpub=epubComContadorAtual?"Com contador":"Por instrução";
+  const capitulos=[], indiceCapitulos=[];const infoNome="informacoes.xhtml";const infoTitulo="Informações";const infoCorpo=`<section class="metadados"><h1>${epubEscapar(base)}</h1><p><strong>Tamanho:</strong> ${epubLargura} × ${epubAltura}</p><p><strong>Total de cores:</strong> ${epubTotalCores}</p><p><strong>Total de quadrados:</strong> ${quadrados}</p><p><strong>Técnica:</strong> ${epubEscapar(tecnicaEpub)}</p><p><strong>Ordem:</strong> ${ordemEpub}</p><p><strong>Formato:</strong> ${formatoEpub}</p></section>`;capitulos.push({nome:infoNome,titulo:infoTitulo,conteudo:epubDocumento(infoTitulo,infoCorpo)});indiceCapitulos.push({nome:infoNome,titulo:infoTitulo});
   function adicionarPaginas(indice,itens,ordem,prefixo){
    const linha=indice+1, blocosAnteriores=indice>0?acumulado[indice-1]:0, totalInstrucoes=itens.length;
    const etapasLinha=[];
    let pagina=0;
    const paginas=[{indiceItem:-1,contador:null,final:false}];
    itens.forEach((item,indiceItem)=>{
-    for(let contador=1;contador<=item.qtd;contador++){
-     paginas.push({indiceItem,contador,final:contador===item.qtd});
-    }
+    if(epubComContadorAtual){
+     for(let contador=1;contador<=item.qtd;contador++) paginas.push({indiceItem,contador,final:contador===item.qtd});
+    }else paginas.push({indiceItem,contador:item.qtd,final:true});
    });
    paginas.forEach((estado)=>{
     const {indiceItem,contador,final}=estado;
@@ -1175,8 +1257,14 @@ async function gerarEPUB(){
   const spine=capitulos.map((c,i)=>`<itemref idref="capitulo-${i+1}" linear="yes" />`).join("");
   const opf=`<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="book-id" version="3.0" xml:lang="pt-BR"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="book-id">${epubEscapar(id)}</dc:identifier><dc:title>${epubEscapar(epubTitulo)}</dc:title><dc:creator>Neto</dc:creator><dc:publisher>Alecrim e Tomilho</dc:publisher><dc:date>${anoGeracao}</dc:date><dc:language>pt-BR</dc:language><meta name="cover" content="capa-imagem" /></metadata><manifest><item id="cover" href="cover.xhtml" media-type="application/xhtml+xml" /><item id="capa-imagem" href="capa.png" media-type="image/png" properties="cover-image" /><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav" /><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" /><item id="style" href="style.css" media-type="text/css" />${manifest}</manifest><spine toc="ncx"><itemref idref="cover" linear="yes" />${spine}</spine><guide><reference type="cover" title="Capa" href="cover.xhtml" /></guide></package>`;
   const arquivos=[{nome:"mimetype",dados:"application/epub+zip"},{nome:"META-INF/container.xml",dados:'<?xml version="1.0" encoding="UTF-8"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml" /></rootfiles></container>'},{nome:"OEBPS/style.css",dados:css},{nome:"OEBPS/capa.png",dados:epubImagemBytes(epubCapa)},{nome:"OEBPS/cover.xhtml",dados:capa},{nome:"OEBPS/nav.xhtml",dados:nav},{nome:"OEBPS/toc.ncx",dados:ncx},{nome:"OEBPS/content.opf",dados:opf},...capitulos.map(c=>({nome:"OEBPS/"+c.nome,dados:c.conteudo}))];
-  const url=URL.createObjectURL(await epubZip(arquivos)), link=document.createElement("a"); link.href=url; link.download=base+".epub"; link.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
- }finally{ botao.disabled=false; botao.textContent="Gerar EPUB"; }
+  const nomeDownload=epubComContadorAtual?base+" - Com contador":base;
+  const url=URL.createObjectURL(await epubZip(arquivos)), link=document.createElement("a"); link.href=url; link.download=nomeDownload+".epub"; link.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+ }finally{ botao.disabled=false; botao.textContent=epubComContadorAtual?"Gerar EPUB com contador":"Gerar EPUB"; }
+}
+async function gerarEPUBComContador(){
+ epubComContadorAtual=true;
+ try{await gerarEPUB();}
+ finally{epubComContadorAtual=false;}
 }
 
 function abrirGrafico(){
@@ -1192,19 +1280,19 @@ let invertRecipe=localStorage.getItem('c2c_invert')==='1';
 let usarNome=localStorage.getItem('c2c_nomecor')==='1';
 function carregarConcluidos(){
  try{
-  const salvo=JSON.parse(localStorage.getItem(`c2c_itens_concluidos_${tecnica}`)||'{}');
+  const salvo=JSON.parse(localStorage.getItem(`c2c_progresso_itens_${tecnica}`)||'{}');
   return salvo && typeof salvo==='object' && !Array.isArray(salvo) ? salvo : {};
  }catch(e){return {};}
 }
-let itensConcluidos=carregarConcluidos();
-
-function obterConcluidos(){
- const itens=itensConcluidos[i];
- return new Set(Array.isArray(itens) ? itens : []);
+let progressoItens=carregarConcluidos();
+function obterProgresso(){
+ const itens=progressoItens[i];
+ if(Array.isArray(itens)) return itens.map(Number);
+ return [];
 }
-function salvarConcluidos(concluidos){
- itensConcluidos[i]=[...concluidos].sort((a,b)=>a-b);
- localStorage.setItem(`c2c_itens_concluidos_${tecnica}`,JSON.stringify(itensConcluidos));
+function salvarProgresso(progresso){
+ progressoItens[i]=progresso;
+ localStorage.setItem(`c2c_progresso_itens_${tecnica}`,JSON.stringify(progressoItens));
 }
 
 function nomeTecnica(){return tecnica==='linha'?'Linha a linha':'C2C';}
@@ -1213,11 +1301,26 @@ function trocarTecnica(){
  localStorage.setItem('c2c_tecnica',tecnica);
  receita=tecnica==='linha'?receitaLinha:receitaC2C;
  acumulado=acumularReceita(receita);
- itensConcluidos=carregarConcluidos();
+ progressoItens=carregarConcluidos();
  i=0;
  document.getElementById('tituloTecnica').textContent=`Instruções ${nomeTecnica()}`;
  renderizarReceitaImpressao();
  atualizar();
+}
+let contadorElegante=localStorage.getItem('c2c_contador_estilo')!=='atual';
+function aplicarEstiloContador(){
+ const contador=document.getElementById('contadorQuadrados');
+ const botao=document.getElementById('btnEstiloContador');
+ if(!contador)return;
+ contador.classList.toggle('contador-vazio',!contador.textContent.trim());
+ contador.classList.toggle('contador-elegante',contadorElegante);
+ contador.classList.toggle('contador-atual',!contadorElegante);
+ if(botao)botao.textContent=contadorElegante?'Usar contador atual':'Usar contador elegante';
+}
+function toggleEstiloContador(){
+ contadorElegante=!contadorElegante;
+ localStorage.setItem('c2c_contador_estilo',contadorElegante?'elegante':'atual');
+ aplicarEstiloContador();
 }
 
 function atualizar(){
@@ -1231,10 +1334,11 @@ const lay=document.body.classList.contains("focus-mode") ? (document.getElementB
 wrap.style.justifyContent=lay==="left"?"flex-start":lay==="center"?"center":"flex-end";
 const lista=receita[i].map((item,indice)=>({item,indice}));
 if(invertRecipe) lista.reverse();
-const concluidos=obterConcluidos();
+const progresso=obterProgresso();
 for(const [pos,{item,indice}] of lista.entries()){
  const s=document.createElement("span");
- if(concluidos.has(indice)) s.classList.add('item-feito');
+ const feitosItem=progresso[indice]||0;
+ if(feitosItem>=item.qtd) s.classList.add('item-feito');
  if(usarNome){
   s.textContent='('+item.qtd+') '+item.nome+(pos<lista.length-1?', ':'');
  }else{
@@ -1246,8 +1350,13 @@ for(const [pos,{item,indice}] of lista.entries()){
  wrap.appendChild(s);
 }
 alvo.appendChild(wrap);
+const indiceAtivo=lista.find(({indice,item})=>(progresso[indice]||0)<item.qtd)?.indice;
+const contadorAtivo=indiceAtivo===undefined?0:(progresso[indiceAtivo]||0);
+const contador=document.getElementById("contadorQuadrados");
+contador.textContent=indiceAtivo!==undefined && contadorAtivo>0 ? `Quadrados feitos: ${contadorAtivo}` : "";
+ aplicarEstiloContador();
 document.getElementById("irLinha").value=i+1;
-let feitos=(i>0?acumulado[i-1]:0)+[...concluidos].reduce((soma,indice)=>soma+receita[i][indice].qtd,0);
+let feitos=(i>0?acumulado[i-1]:0)+progresso.reduce((soma,quantidade,indice)=>soma+Math.min(quantidade||0,receita[i][indice].qtd),0);
 let total=acumulado[acumulado.length-1];
 let pct=feitos*100/total;
 document.getElementById("barraProgresso").style.width=pct+"%";
@@ -1259,13 +1368,13 @@ function anterior(){if(i>0){i--;
  atualizar();}}
 function proxima(){if(i<receita.length-1){i++;atualizar();}}
 function marcarProximo(){
- const concluidos=obterConcluidos();
+ const progresso=obterProgresso();
  const lista=receita[i].map((_,indice)=>indice);
  if(invertRecipe) lista.reverse();
- const proximo=lista.find(indice=>!concluidos.has(indice));
+ const proximo=lista.find(indice=>(progresso[indice]||0)<receita[i][indice].qtd);
  if(proximo!==undefined){
-  concluidos.add(proximo);
-  salvarConcluidos(concluidos);
+  progresso[proximo]=(progresso[proximo]||0)+1;
+  salvarProgresso(progresso);
   atualizar();
  }else if(i<receita.length-1){
   i++;
@@ -1273,13 +1382,13 @@ function marcarProximo(){
  }
 }
 function marcarAnterior(){
- const concluidos=obterConcluidos();
+ const progresso=obterProgresso();
  const lista=receita[i].map((_,indice)=>indice);
  if(invertRecipe) lista.reverse();
- const anterior=[...lista].reverse().find(indice=>concluidos.has(indice));
+ const anterior=[...lista].reverse().find(indice=>(progresso[indice]||0)>0);
  if(anterior!==undefined){
-  concluidos.delete(anterior);
-  salvarConcluidos(concluidos);
+  progresso[anterior]--;
+  salvarProgresso(progresso);
   atualizar();
  }else if(i>0){
   i--;
@@ -1450,7 +1559,8 @@ document.getElementById("layout").value=lay;
 trocarLayout();
 document.getElementById("tema").value=th;
  document.getElementById("btnInvert").textContent=invertRecipe?"Ordem normal":"Inverter ordem";
- document.getElementById("btnNomeCor").textContent=usarNome?"Blocos":"Nomes";
+document.getElementById("btnNomeCor").textContent=usarNome?"Blocos":"Nomes";
+ aplicarEstiloContador();
 miniNormal=false;
  miniFullscreen=false;
 aplicarMini();

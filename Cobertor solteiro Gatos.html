@@ -109779,7 +109779,7 @@ window.onload=function(){
  let s=parseInt(localStorage.getItem("c2c_linha"));
  if(!isNaN(s) && s>=0 && s<receita.length) i=s;
  document.getElementById("atalhos").textContent="← Desfazer instrução • → Concluir instrução • Z Modo Zen • Digite um número para ir para uma linha";
-let th=localStorage.getItem("c2c_theme")||"";
+let th=localStorage.getItem("c2c_theme")||"lilac-dark";
 let lay=localStorage.getItem("c2c_layout")||"left";
 document.getElementById("tecnica").value=tecnica;
 document.getElementById("tituloTecnica").textContent=`Instruções ${nomeTecnica()}`;

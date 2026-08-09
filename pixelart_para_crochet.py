@@ -28,7 +28,7 @@ def abrir_seletor_de_projetos():
     painel = tk.Frame(janela, bg="#21152f", padx=34, pady=30)
     painel.pack(fill="both", expand=True, padx=18, pady=18)
 
-    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "alecrim-tomilho-logo.png")
+    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "images", "alecrim-tomilho-logo.png")
     try:
         logo = Image.open(logo_path).convert("RGBA")
         logo.thumbnail((430, 170), Image.Resampling.LANCZOS if hasattr(Image, "Resampling") else Image.LANCZOS)

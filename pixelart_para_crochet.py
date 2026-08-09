@@ -21,8 +21,8 @@ def abrir_seletor_de_projetos():
     """Mantém uma janela aberta para gerar vários projetos, um por vez."""
     janela = tk.Tk()
     janela.title("Alecrim e Tomilho — Gerador de receitas")
-    janela.geometry("560x440")
-    janela.minsize(480, 380)
+    janela.geometry("560x520")
+    janela.minsize(480, 460)
     janela.configure(bg="#170f23")
 
     painel = tk.Frame(janela, bg="#21152f", padx=34, pady=30)
@@ -40,7 +40,7 @@ def abrir_seletor_de_projetos():
     tk.Label(painel, text="Gerador de receitas Pixel Art", fg="#f5edff", bg="#21152f", font=("Segoe UI", 16, "bold")).pack()
     tk.Label(painel, text="Escolha uma imagem por vez. A janela continuará aberta para o próximo projeto.", fg="#c2b2d1", bg="#21152f", wraplength=430, justify="center", font=("Segoe UI", 10)).pack(pady=(8, 24))
 
-    status = tk.Label(painel, text="", fg="#c7a6e8", bg="#21152f", font=("Segoe UI", 10))
+    status = tk.Label(painel, text="", fg="#c7a6e8", bg="#21152f", font=("Segoe UI", 10), height=2, wraplength=430)
 
     def escolher_arquivo():
         caminho = filedialog.askopenfilename(

@@ -109530,8 +109530,8 @@ function salvarProgresso(progresso){
 function nomeTecnica(){return tecnica==='linha'?'Linha a linha':'C2C';}
 function textoLimite(linha){
  const avisos=[];
- if(linha===larguraReceita) avisos.push(`Limite da largura (${larguraReceita}) alcançado — não haverá aumento nessa direção.`);
- if(linha===alturaReceita && alturaReceita!==larguraReceita) avisos.push(`Limite da altura (${alturaReceita}) alcançado — não haverá aumento nessa direção.`);
+ if(linha===larguraReceita+1) avisos.push(`Limite da largura (${larguraReceita}) alcançado — não haverá aumento nessa direção.`);
+ if(linha===alturaReceita+1 && alturaReceita!==larguraReceita) avisos.push(`Limite da altura (${alturaReceita}) alcançado — não haverá aumento nessa direção.`);
  return avisos.join(' ');
 }
 function trocarTecnica(){

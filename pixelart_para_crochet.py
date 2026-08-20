@@ -1240,10 +1240,11 @@ async function gerarEPUB(){
     const ancora=`${prefixo}-passo-${pagina++}`;
     const etapaClasse=pagina===1?'':'etapa';
     const etapaEstilo=pagina===1?'':' style="page-break-before:always;break-before:page"';
-    // O limite alcançado na linha anterior passa a valer a partir desta linha.
-    // No EPUB ponto a ponto, o aviso permanece visível durante toda a instrução.
-    const alertaLimite=textoLimite(linha-1);
-    const exibirAlerta=alertaLimite && (epubComContadorAtual || indiceItem===-1);
+    // O aviso é mostrado na linha seguinte ao limite, somente na última instrução.
+    // No EPUB ponto a ponto, ele permanece por toda essa última instrução.
+    const alertaLimite=textoLimite(linha);
+    const ultimaInstrucao=totalInstrucoes-1;
+    const exibirAlerta=alertaLimite && (epubComContadorAtual ? indiceItem===ultimaInstrucao : final && indiceItem===ultimaInstrucao);
     const contadorHtml=contador!==null && !final ? `<p style="text-align:center;margin-top:1.5em"><strong>Quadrados feitos: ${contador}</strong></p>` : "";
     const corpo=`<section id="${ancora}" class="${etapaClasse}"${etapaEstilo} epub:type="chapter"><h1>${epubEscapar(tituloBase)}</h1>${exibirAlerta?`<p class="alerta-limite">${epubEscapar(alertaLimite)}</p>`:''}<table class="progresso" role="presentation" aria-label="Progresso acumulado: ${percentual.toFixed(1)}%"><tr><td class="progresso-preenchimento" style="width:${percentual.toFixed(1)}%">&#160;</td><td class="progresso-restante" style="width:${100-percentual.toFixed(1)}%">&#160;</td></tr></table><p><strong>Progresso acumulado:</strong> ${feitos} de ${quadrados} quadrados (${percentual.toFixed(1)}%)</p><p style="margin-top:1em"><strong>Instruções concluídas:</strong> ${indiceItem<0?0:indiceItem+(final?1:0)} de ${totalInstrucoes}</p><div class="receita">${instrucoes}</div>${contadorHtml}</section>`;
     const nomeEtapa=`${prefixo}-passo-${pagina-1}.xhtml`;
@@ -1361,13 +1362,15 @@ for(const [pos,{item,indice}] of lista.entries()){
  wrap.appendChild(s);
 }
 alvo.appendChild(wrap);
+const indiceAtivo=lista.find(({indice,item})=>(progresso[indice]||0)<item.qtd)?.indice;
 const alerta=document.getElementById('alertaLimite');
 if(alerta){
  const mensagem=textoLimite(i+1);
+ const ultimaInstrucao=lista.at(-1)?.indice;
+ const exibirAlerta=mensagem && (indiceAtivo===ultimaInstrucao || indiceAtivo===undefined);
  alerta.textContent=mensagem;
- alerta.style.display=mensagem?'block':'none';
+ alerta.style.display=exibirAlerta?'block':'none';
 }
-const indiceAtivo=lista.find(({indice,item})=>(progresso[indice]||0)<item.qtd)?.indice;
 const contadorAtivo=indiceAtivo===undefined?0:(progresso[indiceAtivo]||0);
 const contador=document.getElementById("contadorQuadrados");
 contador.textContent=indiceAtivo!==undefined && contadorAtivo>0 ? `Quadrados feitos: ${contadorAtivo}` : "";

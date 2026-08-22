@@ -1209,6 +1209,7 @@ function epubImagemBytes(dataUri){
 }
 let epubComContadorAtual=false;
 let epubCompatibilidade=false;
+let epubParte=0;
 async function gerarEPUB(){
  const idBotao=epubCompatibilidade?"btnEPUBCompativel":(epubComContadorAtual?"btnEPUBContador":"btnEPUB");
  const textoBotao=epubCompatibilidade?"Gerar EPUB — Compatibilidade":(epubComContadorAtual?"Gerar EPUB com contador":"Gerar EPUB");
@@ -1216,11 +1217,14 @@ async function gerarEPUB(){
  botao.disabled=true; botao.textContent=epubCompatibilidade?"Gerando EPUB compatível…":(epubComContadorAtual?"Gerando EPUB com contador…":"Gerando EPUB…");
  try{
   const total=receita.length, quadrados=epubLargura*epubAltura, base=epubTitulo.replace(/\\.[^.]+$/,""), id="urn:c2c:"+base, anoGeracao=new Date().getFullYear(), tecnicaEpub=nomeTecnica();
+  const primeiraLinha=epubParte===2?Math.ceil(total/2):0;
+  const ultimaLinha=epubParte===1?Math.ceil(total/2):total;
+  const sufixoParte=epubParte?` — Parte ${epubParte} de 2`:"";
   const css=`body{font-family:sans-serif;line-height:1.45;margin:5%;color:#111}h1,h2{text-align:center}.capa,.metadados{text-align:center}.capa{margin:-5%}.capa-imagem{display:block;width:100%;height:auto}.metadados{margin:1.5em 0}.alerta-limite{margin:1em 0;padding:.65em .8em;border:1px solid #c99b3b;border-radius:.35em;background:#fff7df;color:#6b4b08;text-align:center;font-size:.85em;font-weight:bold}.progresso{width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #555;margin:1em 0 .35em}.progresso td{height:1em;padding:0;font-size:1px;line-height:1px}.progresso-preenchimento{background:#4caf50}.progresso-restante{background:#eee}.progresso-texto{text-align:center;font-weight:bold}.receita{text-align:center;margin:2em 0}.instrucao{display:inline;font-weight:bold}.bloco{display:inline-block;padding:.25em .45em;margin:.12em;border:1px solid #222;font-weight:bold;border-radius:.2em}.concluida,del,s{text-decoration:line-through 2px currentColor;opacity:.58}.etapa{break-before:page;page-break-before:always}nav ol{padding-left:1.4em}`;
-  const capa=epubDocumento(epubTitulo,`<section class="capa" epub:type="cover"><img class="capa-imagem" src="capa.png" alt="${epubEscapar(epubTitulo)}" /></section>`);
+  const capa=epubDocumento(epubTitulo+sufixoParte,`<section class="capa" epub:type="cover"><img class="capa-imagem" src="capa.png" alt="${epubEscapar(epubTitulo)}" /></section>`);
   const ordemEpub=invertRecipe?"Inversa":"Normal";
   const formatoEpub=epubCompatibilidade?"Compatibilidade":(epubComContadorAtual?"Com contador":"Por instrução");
-  const capitulos=[], indiceCapitulos=[];const infoNome="informacoes.xhtml";const infoTitulo="Informações";const infoCorpo=`<section class="metadados"><h1>${epubEscapar(base)}</h1><p><strong>Tamanho:</strong> ${epubLargura} × ${epubAltura}</p><p><strong>Total de cores:</strong> ${epubTotalCores}</p><p><strong>Total de quadrados:</strong> ${quadrados}</p><p><strong>Técnica:</strong> ${epubEscapar(tecnicaEpub)}</p><p><strong>Ordem:</strong> ${ordemEpub}</p><p><strong>Formato:</strong> ${formatoEpub}</p></section>`;capitulos.push({nome:infoNome,titulo:infoTitulo,conteudo:epubDocumento(infoTitulo,infoCorpo)});indiceCapitulos.push({nome:infoNome,titulo:infoTitulo});
+  const capitulos=[], indiceCapitulos=[];const infoNome="informacoes.xhtml";const infoTitulo="Informações"+sufixoParte;const infoCorpo=`<section class="metadados"><h1>${epubEscapar(base)}${epubEscapar(sufixoParte)}</h1><p><strong>Tamanho:</strong> ${epubLargura} × ${epubAltura}</p><p><strong>Total de cores:</strong> ${epubTotalCores}</p><p><strong>Total de quadrados:</strong> ${quadrados}</p><p><strong>Linhas nesta parte:</strong> ${primeiraLinha+1} a ${ultimaLinha} de ${total}</p><p><strong>Técnica:</strong> ${epubEscapar(tecnicaEpub)}</p><p><strong>Ordem:</strong> ${ordemEpub}</p><p><strong>Formato:</strong> ${formatoEpub}</p></section>`;capitulos.push({nome:infoNome,titulo:infoTitulo,conteudo:epubDocumento(infoTitulo,infoCorpo)});indiceCapitulos.push({nome:infoNome,titulo:infoTitulo});
   function adicionarPaginas(indice,itens,ordem,prefixo){
    const linha=indice+1, blocosAnteriores=indice>0?acumulado[indice-1]:0, totalInstrucoes=itens.length;
    const etapasLinha=[];
@@ -1269,7 +1273,10 @@ async function gerarEPUB(){
    });
   }
 
-  receita.forEach((itens,indice)=>adicionarPaginas(indice,invertRecipe?[...itens].reverse():itens,ordemEpub,`${invertRecipe?'linha-inversa':'linha'}-${indice+1}`));
+  receita.slice(primeiraLinha,ultimaLinha).forEach((itens,indiceParte)=>{
+   const indice=primeiraLinha+indiceParte;
+   adicionarPaginas(indice,invertRecipe?[...itens].reverse():itens,ordemEpub,`${invertRecipe?'linha-inversa':'linha'}-${indice+1}`);
+  });
   const navItens=[`<li><a href="cover.xhtml">Capa</a></li>`,...indiceCapitulos.map(c=>`<li><a href="${c.nome}">${epubEscapar(c.titulo)}</a></li>`)].join("");
   const nav=epubDocumento("Sumário",`<nav epub:type="toc" id="toc"><h1>Sumário</h1><ol>${navItens}</ol></nav>`);
   const ncxPontos=[`<navPoint id="nav-cover" playOrder="1"><navLabel><text>Capa</text></navLabel><content src="cover.xhtml" /></navPoint>`,...indiceCapitulos.map((c,i)=>`<navPoint id="nav-${i+1}" playOrder="${i+2}"><navLabel><text>${epubEscapar(c.titulo)}</text></navLabel><content src="${c.nome}" /></navPoint>`)].join("");
@@ -1278,7 +1285,8 @@ async function gerarEPUB(){
   const spine=capitulos.map((c,i)=>`<itemref idref="capitulo-${i+1}" linear="yes" />`).join("");
   const opf=`<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" unique-identifier="book-id" version="3.0" xml:lang="pt-BR"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="book-id">${epubEscapar(id)}</dc:identifier><dc:title>${epubEscapar(epubTitulo)}</dc:title><dc:creator>Neto</dc:creator><dc:publisher>Alecrim e Tomilho</dc:publisher><dc:date>${anoGeracao}</dc:date><dc:language>pt-BR</dc:language><meta name="cover" content="capa-imagem" /></metadata><manifest><item id="cover" href="cover.xhtml" media-type="application/xhtml+xml" /><item id="capa-imagem" href="capa.png" media-type="image/png" properties="cover-image" /><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav" /><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" /><item id="style" href="style.css" media-type="text/css" />${manifest}</manifest><spine toc="ncx"><itemref idref="cover" linear="yes" />${spine}</spine><guide><reference type="cover" title="Capa" href="cover.xhtml" /></guide></package>`;
   const arquivos=[{nome:"mimetype",dados:"application/epub+zip"},{nome:"META-INF/container.xml",dados:'<?xml version="1.0" encoding="UTF-8"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml" /></rootfiles></container>'},{nome:"OEBPS/style.css",dados:css},{nome:"OEBPS/capa.png",dados:epubImagemBytes(epubCapa)},{nome:"OEBPS/cover.xhtml",dados:capa},{nome:"OEBPS/nav.xhtml",dados:nav},{nome:"OEBPS/toc.ncx",dados:ncx},{nome:"OEBPS/content.opf",dados:opf},...capitulos.map(c=>({nome:"OEBPS/"+c.nome,dados:c.conteudo}))];
-  const nomeDownload=epubCompatibilidade?base+" - Compatibilidade":(epubComContadorAtual?base+" - Com contador":base);
+  const nomeBase=epubCompatibilidade?base+" - Compatibilidade":(epubComContadorAtual?base+" - Com contador":base);
+  const nomeDownload=nomeBase+(epubParte?` - Parte ${epubParte} de 2`:"");
   const url=URL.createObjectURL(await epubZip(arquivos)), link=document.createElement("a"); link.href=url; link.download=nomeDownload+".epub"; link.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
  }finally{ botao.disabled=false; botao.textContent=textoBotao; }
 }
@@ -1290,8 +1298,12 @@ async function gerarEPUBComContador(){
 async function gerarEPUBCompativel(){
  epubComContadorAtual=true;
  epubCompatibilidade=true;
- try{await gerarEPUB();}
- finally{epubCompatibilidade=false;epubComContadorAtual=false;}
+ try{
+  epubParte=1;
+  await gerarEPUB();
+  epubParte=2;
+  await gerarEPUB();
+ }finally{epubParte=0;epubCompatibilidade=false;epubComContadorAtual=false;}
 }
 
 function abrirGrafico(){

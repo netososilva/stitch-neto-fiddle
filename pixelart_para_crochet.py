@@ -1152,7 +1152,9 @@ html.append(f"const epubLargura={largura};const epubAltura={altura};const epubTo
 html.append('''
 
 function epubEscapar(valor){
- return String(valor).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
+ // Alguns leitores Xteink não interpretam &apos; corretamente. A referência
+ // numérica é equivalente e funciona também nos renderizadores mais antigos.
+ return String(valor).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
 function epubDocumento(titulo, corpo){
  return `<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="pt-BR" lang="pt-BR"><head><meta charset="utf-8" /><title>${epubEscapar(titulo)}</title><link rel="stylesheet" type="text/css" href="style.css" /></head><body>${corpo}</body></html>`;
@@ -1210,7 +1212,7 @@ async function gerarEPUB(){
  botao.disabled=true; botao.textContent=epubComContadorAtual?"Gerando EPUB com contador…":"Gerando EPUB…";
  try{
   const total=receita.length, quadrados=epubLargura*epubAltura, base=epubTitulo.replace(/\\.[^.]+$/,""), id="urn:c2c:"+base, anoGeracao=new Date().getFullYear(), tecnicaEpub=nomeTecnica();
-  const css=`body{font-family:sans-serif;line-height:1.45;margin:5%;color:#111}h1,h2{text-align:center}.capa,.metadados{text-align:center}.capa{margin:-5%}.capa-imagem{display:block;width:100%;height:auto}.metadados{margin:1.5em 0}.alerta-limite{margin:1em 0;padding:.65em .8em;border:1px solid #c99b3b;border-radius:.35em;background:#fff7df;color:#6b4b08;text-align:center;font-size:.85em;font-weight:bold}.progresso{width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #555;margin:1em 0 .35em}.progresso td{height:1em;padding:0;font-size:1px;line-height:1px}.progresso-preenchimento{background:#4caf50}.progresso-restante{background:#eee}.receita{text-align:center;margin:2em 0}.instrucao{display:inline;font-weight:bold}.bloco{display:inline-block;padding:.25em .45em;margin:.12em;border:1px solid #222;font-weight:bold;border-radius:.2em}.concluida{text-decoration:line-through 2px currentColor;opacity:.58;filter:saturate(.65)}.etapa{break-before:page;page-break-before:always}nav ol{padding-left:1.4em}`;
+  const css=`body{font-family:sans-serif;line-height:1.45;margin:5%;color:#111}h1,h2{text-align:center}.capa,.metadados{text-align:center}.capa{margin:-5%}.capa-imagem{display:block;width:100%;height:auto}.metadados{margin:1.5em 0}.alerta-limite{margin:1em 0;padding:.65em .8em;border:1px solid #c99b3b;border-radius:.35em;background:#fff7df;color:#6b4b08;text-align:center;font-size:.85em;font-weight:bold}.progresso{width:100%;table-layout:fixed;border-collapse:collapse;border:1px solid #555;margin:1em 0 .35em}.progresso td{height:1em;padding:0;font-size:1px;line-height:1px}.progresso-preenchimento{background:#4caf50}.progresso-restante{background:#eee}.progresso-texto{text-align:center;font-weight:bold}.receita{text-align:center;margin:2em 0}.instrucao{display:inline;font-weight:bold}.bloco{display:inline-block;padding:.25em .45em;margin:.12em;border:1px solid #222;font-weight:bold;border-radius:.2em}.concluida,del,s{text-decoration:line-through 2px currentColor;opacity:.58}.etapa{break-before:page;page-break-before:always}nav ol{padding-left:1.4em}`;
   const capa=epubDocumento(epubTitulo,`<section class="capa" epub:type="cover"><img class="capa-imagem" src="capa.png" alt="${epubEscapar(epubTitulo)}" /></section>`);
   const ordemEpub=invertRecipe?"Inversa":"Normal";
   const formatoEpub=epubComContadorAtual?"Com contador":"Por instrução";
@@ -1234,9 +1236,13 @@ async function gerarEPUB(){
     }
     const percentual=feitos*100/quadrados;
     const tituloBase=`Linha ${linha} de ${total} — Ordem ${ordem}`;
+    const concluida=indiceItemAtual=>indiceItemAtual<indiceItem || (indiceItemAtual===indiceItem && final);
+    // <del> é uma marcação semântica: continua mostrando o risco mesmo quando
+    // o leitor ignora text-decoration no CSS (caso do leitor nativo do Xteink).
+    const riscar=(conteudo,estaConcluida)=>estaConcluida?`<del class="concluida">${conteudo}</del>`:conteudo;
     const instrucoes=usarNome
-     ? itens.map((item,indiceItemAtual)=>`<span class="instrucao${indiceItemAtual<indiceItem || (indiceItemAtual===indiceItem && final)?' concluida':''}">(${item.qtd}) ${epubEscapar(item.nome)}</span>`).join(", ")
-     : itens.map((item,indiceItemAtual)=>`<span class="bloco${indiceItemAtual<indiceItem || (indiceItemAtual===indiceItem && final)?' concluida':''}" style="background-color:${item.bg};color:${item.fg}">${epubEscapar(item.codigo)}×${item.qtd}</span>`).join("");
+     ? itens.map((item,indiceItemAtual)=>riscar(`<span class="instrucao">(${item.qtd}) ${epubEscapar(item.nome)}</span>`,concluida(indiceItemAtual))).join(", ")
+     : itens.map((item,indiceItemAtual)=>riscar(`<span class="bloco" style="background-color:${item.bg};color:${item.fg}">${epubEscapar(item.codigo)}×${item.qtd}</span>`,concluida(indiceItemAtual))).join("");
     const ancora=`${prefixo}-passo-${pagina++}`;
     const etapaClasse=pagina===1?'':'etapa';
     const etapaEstilo=pagina===1?'':' style="page-break-before:always;break-before:page"';
@@ -1246,7 +1252,9 @@ async function gerarEPUB(){
     const ultimaInstrucao=totalInstrucoes-1;
     const exibirAlerta=alertaLimite && (epubComContadorAtual ? indiceItem===ultimaInstrucao : final && indiceItem===ultimaInstrucao);
     const contadorHtml=contador!==null && !final ? `<p style="text-align:center;margin-top:1.5em"><strong>Quadrados feitos: ${contador}</strong></p>` : "";
-    const corpo=`<section id="${ancora}" class="${etapaClasse}"${etapaEstilo} epub:type="chapter"><h1>${epubEscapar(tituloBase)}</h1>${exibirAlerta?`<p class="alerta-limite">${epubEscapar(alertaLimite)}</p>`:''}<table class="progresso" role="presentation" aria-label="Progresso acumulado: ${percentual.toFixed(1)}%"><tr><td class="progresso-preenchimento" style="width:${percentual.toFixed(1)}%">&#160;</td><td class="progresso-restante" style="width:${100-percentual.toFixed(1)}%">&#160;</td></tr></table><p><strong>Progresso acumulado:</strong> ${feitos} de ${quadrados} quadrados (${percentual.toFixed(1)}%)</p><p style="margin-top:1em"><strong>Instruções concluídas:</strong> ${indiceItem<0?0:indiceItem+(final?1:0)} de ${totalInstrucoes}</p><div class="receita">${instrucoes}</div>${contadorHtml}</section>`;
+    // width/bgcolor são atributos antigos, mas são o fallback que o leitor
+    // nativo do Xteink respeita quando descarta estilos de células de tabela.
+    const corpo=`<section id="${ancora}" class="${etapaClasse}"${etapaEstilo} epub:type="chapter"><h1>${epubEscapar(tituloBase)}</h1>${exibirAlerta?`<p class="alerta-limite">${epubEscapar(alertaLimite)}</p>`:''}<table class="progresso" role="presentation" aria-label="Progresso acumulado: ${percentual.toFixed(1)}%"><tr><td class="progresso-preenchimento" width="${percentual.toFixed(1)}%" bgcolor="#4caf50" style="width:${percentual.toFixed(1)}%;background:#4caf50">&#160;</td><td class="progresso-restante" width="${(100-percentual).toFixed(1)}%" bgcolor="#eeeeee" style="width:${(100-percentual).toFixed(1)}%;background:#eeeeee">&#160;</td></tr></table><p class="progresso-texto"><strong>Progresso acumulado:</strong> ${feitos} de ${quadrados} quadrados (${percentual.toFixed(1)}%)</p><p style="margin-top:1em"><strong>Instruções concluídas:</strong> ${indiceItem<0?0:indiceItem+(final?1:0)} de ${totalInstrucoes}</p><div class="receita">${instrucoes}</div>${contadorHtml}</section>`;
     const nomeEtapa=`${prefixo}-passo-${pagina-1}.xhtml`;
     const capituloEtapa={nome:nomeEtapa,titulo:tituloBase,conteudo:epubDocumento(tituloBase,corpo)};
     capitulos.push(capituloEtapa);
@@ -1722,6 +1730,7 @@ h1, h2 { text-align: center; }
 .progresso td { height: 1em; padding: 0; font-size: 1px; line-height: 1px; }
 .progresso-preenchimento { background: #4caf50; }
 .progresso-restante { background: #eee; }
+.progresso-texto { text-align: center; font-weight: bold; }
 .receita { text-align: center; margin: 2em 0; }
 .instrucao { display: inline; font-weight: bold; }
 nav ol { padding-left: 1.4em; }
@@ -1761,10 +1770,10 @@ nav ol { padding-left: 1.4em; }
 <section epub:type="chapter">
   <h1>{escape(titulo_capitulo)}</h1>
   <table class="progresso" role="presentation" aria-label="Progresso acumulado: {percentual:.1f}%"><tr>
-    <td class="progresso-preenchimento" style="width:{percentual:.1f}%">&#160;</td>
-    <td class="progresso-restante" style="width:{100 - percentual:.1f}%">&#160;</td>
+    <td class="progresso-preenchimento" width="{percentual:.1f}%" bgcolor="#4caf50" style="width:{percentual:.1f}%;background:#4caf50">&#160;</td>
+    <td class="progresso-restante" width="{100 - percentual:.1f}%" bgcolor="#eeeeee" style="width:{100 - percentual:.1f}%;background:#eeeeee">&#160;</td>
   </tr></table>
-  <p><strong>Progresso acumulado:</strong> {feitos} de {total_quadrados} quadrados ({percentual:.1f}%)</p>
+  <p class="progresso-texto"><strong>Progresso acumulado:</strong> {feitos} de {total_quadrados} quadrados ({percentual:.1f}%)</p>
   <div class="receita">{", ".join(instrucoes)}</div>
 </section>''')
         nav_itens.append(f'<li><a href="{nome_arquivo}">{escape(titulo_capitulo)}</a></li>')

@@ -1223,7 +1223,7 @@ async function gerarEPUB(){
   const primeiraLinha=epubParte?(epubParte-1)*linhasPorParte:0;
   const ultimaLinha=epubParte?Math.min(total,epubParte*linhasPorParte):total;
   const sufixoParte=epubParte?` — Parte ${epubParte} de ${totalPartes}`:"";
-  const css=`body{font-family:sans-serif;line-height:1.45;margin:5%;color:#111}h1,h2{text-align:center}.capa,.metadados{text-align:center}.capa{margin:-5%}.capa-imagem{display:block;width:100%;height:auto}.metadados{margin:1.5em 0}.alerta-limite{margin:1em 0;padding:.65em .8em;border:1px solid #c99b3b;border-radius:.35em;background:#fff7df;color:#6b4b08;text-align:center;font-size:.85em;font-weight:bold}.progresso-ascii{display:flex;width:100%;box-sizing:border-box;align-items:baseline;margin:1em 0;font-family:monospace;line-height:1.3;white-space:nowrap}.progresso-ascii-itens{display:flex;flex:1;min-width:0}.progresso-ascii-itens span{flex:1;text-align:center}.progresso-ascii-percentual{margin-left:.45em}.receita{text-align:center;margin:2em 0}.instrucao{display:inline;font-weight:bold}.bloco{display:inline-block;padding:.25em .45em;margin:.12em;border:1px solid #222;font-weight:bold;border-radius:.2em}.concluida,del,s{text-decoration:line-through 2px currentColor;opacity:.58}.etapa{break-before:page;page-break-before:always}nav ol{padding-left:1.4em}`;
+  const css=`body{font-family:sans-serif;line-height:1.45;margin:5%;color:#111}h1,h2{text-align:center}.capa,.metadados{text-align:center}.capa{margin:-5%}.capa-imagem{display:block;width:100%;height:auto}.metadados{margin:1.5em 0}.alerta-limite{margin:1em 0;padding:.65em .8em;border:1px solid #c99b3b;border-radius:.35em;background:#fff7df;color:#6b4b08;text-align:center;font-size:.85em;font-weight:bold}.progresso-ascii{display:block;margin:1em 0;font-family:monospace;white-space:nowrap;text-align:center}.receita{text-align:center;margin:2em 0}.instrucao{display:inline;font-weight:bold}.bloco{display:inline-block;padding:.25em .45em;margin:.12em;border:1px solid #222;font-weight:bold;border-radius:.2em}.concluida,del,s{text-decoration:line-through 2px currentColor;opacity:.58}.etapa{break-before:page;page-break-before:always}nav ol{padding-left:1.4em}`;
   const capa=epubDocumento(epubTitulo+sufixoParte,`<section class="capa" epub:type="cover"><img class="capa-imagem" src="capa.png" alt="${epubEscapar(epubTitulo)}" /></section>`);
   const ordemEpub=invertRecipe?"Inversa":"Normal";
   const formatoEpub=epubCompatibilidade?"Compatibilidade":(epubComContadorAtual?"Com contador":"Por instrução");
@@ -1266,10 +1266,10 @@ async function gerarEPUB(){
     const ultimaInstrucao=totalInstrucoes-1;
     const exibirAlerta=alertaLimite && (epubComContadorAtual ? indiceItem===ultimaInstrucao : final && indiceItem===ultimaInstrucao);
     const contadorHtml=contador!==null && !final ? `<p style="text-align:center;margin-top:1.5em"><strong>Quadrados feitos: ${contador}</strong></p>` : "";
-    const segmentos=40, preenchidos=Math.round(percentual*segmentos/100);
-    const caracteres="#".repeat(preenchidos)+"-".repeat(segmentos-preenchidos);
-    const barraAscii=`<p class="progresso-ascii" aria-label="Progresso acumulado: ${feitos} de ${quadrados} quadrados (${percentual.toFixed(1)}%)"><span aria-hidden="true">[</span><span class="progresso-ascii-itens" aria-hidden="true">${[...caracteres].map(caractere=>`<span>${caractere}</span>`).join("")}</span><span aria-hidden="true">]</span><span class="progresso-ascii-percentual" aria-hidden="true">${percentual.toFixed(1)}%</span></p>`;
-    const corpo=`<section id="${ancora}" class="${etapaClasse}"${etapaEstilo} epub:type="chapter"><h1>${epubEscapar(tituloBase)}</h1>${exibirAlerta?`<p class="alerta-limite">${epubEscapar(alertaLimite)}</p>`:''}${barraAscii}<p style="margin-top:1em"><strong>Instruções concluídas:</strong> ${indiceItem<0?0:indiceItem+(final?1:0)} de ${totalInstrucoes}</p><div class="receita">${instrucoes}</div>${contadorHtml}</section>`;
+    const segmentos=20, preenchidos=Math.round(percentual*segmentos/100);
+    const barraAscii=`[${"#".repeat(preenchidos)}${"-".repeat(segmentos-preenchidos)}] ${percentual.toFixed(1)}%`;
+    const barraAsciiHtml=`<p class="progresso-ascii" aria-label="Progresso acumulado: ${feitos} de ${quadrados} quadrados (${percentual.toFixed(1)}%)">${barraAscii}</p>`;
+    const corpo=`<section id="${ancora}" class="${etapaClasse}"${etapaEstilo} epub:type="chapter"><h1>${epubEscapar(tituloBase)}</h1>${exibirAlerta?`<p class="alerta-limite">${epubEscapar(alertaLimite)}</p>`:''}${barraAsciiHtml}<p style="margin-top:1em"><strong>Instruções concluídas:</strong> ${indiceItem<0?0:indiceItem+(final?1:0)} de ${totalInstrucoes}</p><div class="receita">${instrucoes}</div>${contadorHtml}</section>`;
     const nomeEtapa=`${prefixo}-passo-${pagina-1}.xhtml`;
     const capituloEtapa={nome:nomeEtapa,titulo:tituloBase,conteudo:epubDocumento(tituloBase,corpo)};
     capitulos.push(capituloEtapa);
@@ -1789,7 +1789,7 @@ nav ol { padding-left: 1.4em; }
                 f'<span class="instrucao">({item["qtd"]}) {escape(item["nome"])}</span>'
             )
         titulo_capitulo = f"Linha {linha} de {TOTAL} — Ordem {ordem}"
-        segmentos = 40
+        segmentos = 20
         preenchidos = round(percentual * segmentos / 100)
         barra_ascii = f'[{"#" * preenchidos}{"-" * (segmentos - preenchidos)}] {percentual:.1f}%'
         capitulos[nome_arquivo] = xhtml_document(titulo_capitulo, f'''

@@ -1268,7 +1268,7 @@ async function gerarEPUB(){
     const contadorHtml=contador!==null && !final ? `<p style="text-align:center;margin-top:1.5em"><strong>Quadrados feitos: ${contador}</strong></p>` : "";
     const segmentos=20, preenchidos=Math.round(percentual*segmentos/100);
     const barraAscii=`[${"#".repeat(preenchidos)}${"-".repeat(segmentos-preenchidos)}] ${percentual.toFixed(1)}%`;
-    const barraAsciiHtml=`<p class="progresso-ascii" aria-label="Progresso acumulado: ${feitos} de ${quadrados} quadrados (${percentual.toFixed(1)}%)">${barraAscii}</p>`;
+    const barraAsciiHtml=`<p class="progresso-ascii" aria-label="Progresso acumulado: ${feitos} de ${quadrados} quadrados (${percentual.toFixed(1)}%)">${barraAscii}</p><p><strong>Progresso acumulado:</strong> ${feitos} de ${quadrados} quadrados (${percentual.toFixed(1)}%)</p>`;
     const corpo=`<section id="${ancora}" class="${etapaClasse}"${etapaEstilo} epub:type="chapter"><h1>${epubEscapar(tituloBase)}</h1>${exibirAlerta?`<p class="alerta-limite">${epubEscapar(alertaLimite)}</p>`:''}${barraAsciiHtml}<p style="margin-top:1em"><strong>Instruções concluídas:</strong> ${indiceItem<0?0:indiceItem+(final?1:0)} de ${totalInstrucoes}</p><div class="receita">${instrucoes}</div>${contadorHtml}</section>`;
     const nomeEtapa=`${prefixo}-passo-${pagina-1}.xhtml`;
     const capituloEtapa={nome:nomeEtapa,titulo:tituloBase,conteudo:epubDocumento(tituloBase,corpo)};
